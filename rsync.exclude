@@ -10,4 +10,5 @@ __pycache__
 .ipynb_checkpoints/
 
 notebooks/
-data/
+data/download-command-file.txt
+data/uproc_results.txt.gz
