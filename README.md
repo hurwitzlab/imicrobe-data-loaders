@@ -12,7 +12,7 @@ Clone this repository to run the scripts.
 ## Usage
 Execute `make ils-imicrobe-projects` to create a file list of the iRODS iMicrobe project directories.
 
-Execute `make write-download-commands-file` to create a file of commands suitable for GNU Parallel.
+Execute `make write-download-command-file` to create a file of commands suitable for GNU Parallel.
 
 Execute `make parallel-iget-uproc-results` to do the deed. This might take a long time.
 
