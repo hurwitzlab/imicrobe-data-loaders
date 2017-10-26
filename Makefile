@@ -6,10 +6,10 @@ ils-imicrobe-projects:
 	ils -r /iplant/home/shared/imicrobe/projects > data/ils_imicrobe_project_listing.txt
 
 write-download-command-file:
-	python write_download_command_file.py --results-target-dp /usr/local/imicrobe/projects --line-limit 100 > data/download-command-file.txt
+	python write_download_command_file.py --results-target-dp ${HOME}/usr/local/imicrobe/projects --line-limit 100 > data/download-command-file.txt
 
 parallel-iget-uproc-results:
-	cat data/download-command-file.txt | parallel --eta -j 2 --noswap '{}'
+	cat data/download-command-file.txt | parallel --eta -j 10 --noswap '{}'
 
 myo-rsync-dry-run:
 	rsync -n -arvzP --delete --exclude-from=rsync.exclude -e "ssh -A -t hpc ssh -A -t myo" ./ :project/imicrobe/imicrobe-load-uproc-results
