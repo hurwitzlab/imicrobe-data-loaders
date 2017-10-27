@@ -4,7 +4,7 @@ Scripts to load UProC results into the iMicrobe database.
 ## Requirements
 These scripts require iRODS, `make`, GNU `parallel`, a Python 3.6+ interpreter, and ORM classes generated
 by [imicrobe-python-orm](https://github.com/hurwitzlab/imicrobe-python-orm).
-See the project README.md for installation instructions.
+See the project [README](https://github.com/hurwitzlab/imicrobe-python-orm) for installation instructions.
 
 ## Installation
 Clone this repository to run the scripts.
