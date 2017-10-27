@@ -14,14 +14,14 @@ Execute `make ils-imicrobe-projects` to create a file list of the iRODS iMicrobe
 
 Execute `make write-download-command-file` to create a file of commands suitable for GNU Parallel.
 
-Execute `make parallel-iget-uproc-results` to do the deed. This might take a long time.
+Execute `make parallel-iget-uproc-results` to do the deed. This should take less than an hour. Try `-j 100` for fun.
 
 Run `make download-pfam-data` to get the necessary Pfam files.
 
 Execute `python load_pfam_table.py` to load Pfam annotations into the uproc table.
 This will first drop the uproc table and delete all rows from the sample_to_uproc table.
 
-Execute `python load_sample_to_uproc_table.py` to load the UProC results into the sample_to_uproc table.
+Run `make write-load-sample-to-uproc-command-file` to create a file of commands for
+GNU Parallel.
 
-## Test
-Run `make test`.
+Run 'make parallel-load-sample-to-uproc' to load the sample_to_uproc table.
