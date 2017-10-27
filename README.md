@@ -22,6 +22,6 @@ Execute `python load_pfam_table.py` to load Pfam annotations into the uproc tabl
 This will first drop the uproc table and delete all rows from the sample_to_uproc table.
 
 Run `make write-load-sample-to-uproc-command-file` to create a file of commands for
-GNU Parallel.
+GNU Parallel. This will also drop and create the sample_to_uproc table.
 
 Run 'make parallel-load-sample-to-uproc' to load the sample_to_uproc table.
