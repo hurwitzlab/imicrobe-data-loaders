@@ -4,8 +4,7 @@ import os
 import time
 
 import sqlalchemy as sa
-from sqlalchemy.orm import relationship, sessionmaker
-from sqlalchemy.dialects import mysql
+from sqlalchemy.orm import sessionmaker
 
 from imicrobe_model import models
 from uproc_models import SampleToUproc, Uproc
@@ -60,15 +59,21 @@ def grouper(iterable, n, fillvalue=None):
 def load_pfam_table(session, engine):
     debug = False
     line_group_length = 2000
-    line_group_counter = 0
     pfamA_fp = 'data/pfamA.txt.gz'
-    with gzip.open(pfamA_fp, 'rt') as pfamA_file:
+    # had problems on myo with U+009D in PF01298 description
+    # not a problem with imicrobe-vm on my laptop
+    # this is the error:
+    #   UnicodeEncodeError: 'latin-1' codec can't encode characters in position 1089-1090: ordinal not in range(256)
+    # why is 'latin-1' codec being used?
+    # specifying encoding='latin-1' and errors='replace' solves the problem on myo
+    with gzip.open(pfamA_fp, 'rt', encoding='latin-1', errors='replace') as pfamA_file:
         for line_group in grouper(pfamA_file.readlines(), line_group_length, fillvalue=None):
             line_counter = 0
             t0 = time.time()
             for line in (line_ for line_ in line_group if line_ is not None):
                 line_counter += 1
                 pfam_acc, pfam_identifier, pfam_aliases, pfam_name, _, _, _, _, description, *the_rest = line.strip().split('\t')
+
                 if debug:
                     print('pfam accession  : {}'.format(pfam_acc))
                     print('pfam identifier : {}'.format(pfam_identifier))
