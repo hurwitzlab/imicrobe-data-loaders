@@ -1,5 +1,5 @@
 import sqlalchemy as sa
-from sqlalchemy.orm import relationship, sessionmaker
+from sqlalchemy.orm import relationship
 from sqlalchemy.dialects import mysql
 
 from imicrobe_model import models
@@ -7,6 +7,10 @@ from imicrobe_model import models
 
 class Uproc(models.Model):
     __tablename__ = 'uproc'
+    __table_args__ = {
+        'mysql_engine': 'InnoDB',
+        'mysql_charset': 'utf8'}
+
     uproc_id = sa.Column(
         'uproc_id',
         mysql.INTEGER(unsigned=True),
@@ -19,12 +23,15 @@ class Uproc(models.Model):
 
     sample_list = relationship('Sample', secondary='sample_to_uproc')
 
-    mysql_engine = 'InnoDB'
-    mysql_charset = 'utf-8'
 
 
 class SampleToUproc(models.Model):
     __tablename__ = 'sample_to_uproc'
+    __table_args__ = (
+        sa.UniqueConstraint('sample_id', 'uproc_id'), {
+        'mysql_engine': 'InnoDB',
+        'mysql_charset': 'utf8'})
+
     sample_to_uproc_id = sa.Column(
         'sample_to_uproc_id',
         mysql.INTEGER(unsigned=True),
@@ -41,10 +48,4 @@ class SampleToUproc(models.Model):
         sa.ForeignKey('uproc.uproc_id', ondelete='CASCADE'),
         nullable=False)
 
-    __table_args__ = (
-        sa.UniqueConstraint('sample_id', 'uproc_id'), )
-
     read_count = sa.Column('read_count', sa.Integer)
-
-    mysql_engine = 'InnoDB'
-    mysql_charset = 'utf-8'
