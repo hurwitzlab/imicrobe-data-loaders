@@ -19,7 +19,7 @@ See the imicrobe-python-orm  [README](https://github.com/hurwitzlab/imicrobe-pyt
 ### Installation
 Clone this repository to run the scripts.
 
-### Usage
+### Usage: Load UProC Pfam results
 Execute `make ils-imicrobe-projects` to create a file list of the iRODS iMicrobe project directories. By default the list will be written to the `data` directory. This step took 83 minutes on a laptop. Maybe run this on a machine with a faster network connection such as lytic or stampede2.
 
 Execute `make write-download-command-file` to create a file of `iget` commands suitable for GNU `parallel`.
@@ -35,3 +35,7 @@ Run `make write-load-sample-to-uproc-command-file` to create a file of commands 
 GNU Parallel. This will also drop and create the sample_to_uproc table.
 
 Run 'make parallel-load-sample-to-uproc' to load the sample_to_uproc table.
+
+### Usage: Load UProC KEGG results
+
+If UProC KEGG results need to be copied from TACC to /iplant/ execute `make copy-uproc-kegg-results-to-iplant` from stampede2.

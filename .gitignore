@@ -1,3 +1,5 @@
+*.joblist
+
 *.csv
 .DS_Store
 *.txt

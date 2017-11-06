@@ -32,3 +32,12 @@ lytic-rsync:
 
 stampede-scp-results:
 	scp imicrobe@stampede.tacc.utexas.edu:/home1/05066/imicrobe/jkl/process_uproc_results/uproc_results.txt.gz data/uproc_results.txt.gz
+
+# run copy-uproc-kegg-results-to-iplant on Stampede2
+copy-uproc-kegg-results-to-iplant:
+	python kegg/write_copy_uproc_kegg_results_to_iplant_job_file.py \
+		--job-file work/copy_uproc_kegg_to_iplant.joblist \
+		--fs-source /work/05066/imicrobe/iplantc.org/data/imicrobe/projects \
+		--irods-target /iplant/home/shared/imicrobe/projects
+	cd work
+	sbatch stampede2_copy_uproc_kegg_to_iplant.sh
