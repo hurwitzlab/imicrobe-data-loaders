@@ -1,3 +1,10 @@
+"""
+
+Usage:
+    python write_download_command_file.py --results-target-dp ${HOME}/usr/local/imicrobe/projects > data/download-command-file.txt
+
+"""
+
 import argparse
 import itertools
 import os
@@ -76,8 +83,11 @@ def main():
                 uproc_results_irods_path = os.path.join(current_collection, line)
                 local_project_sample_dp = os.path.join(results_target_dp, current_collection[len(imicrobe_root)+1:])
                 local_uproc_results_fp = os.path.join(local_project_sample_dp, line)
-                sys.stdout.write('mkdir -p {dir};chmod agu+rx {dir};'.format(dir=os.path.dirname(local_uproc_results_fp)))
-                sys.stdout.write('iget -K {source} {target};chmod agu+r {target}\n'.format(source=uproc_results_irods_path, target=local_uproc_results_fp))
+                sys.stdout.write(
+                    'mkdir -p {dir};chmod agu+rx {dir};'.format(dir=os.path.dirname(local_uproc_results_fp)))
+                sys.stdout.write(
+                    'iget -K {source} {target};chmod agu+r {target}\n'.format(
+                        source=uproc_results_irods_path, target=local_uproc_results_fp))
 
             elif line.endswith('.uproc.pfam') and current_collection is not None:
                 # we have a UProC Pfam result file
