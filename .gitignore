@@ -1,3 +1,5 @@
+loaders/uproc_results/test/*
+
 *.joblist
 
 *.csv
