@@ -8,7 +8,7 @@ ils-imicrobe-projects:
 
 test-write-download-command-file:
 	python write_download_command_file.py \
-		--line-limit 100 \
+		--line-limit 1000 \
 		--results-target-dp ${HOME}/usr/local/imicrobe/projects > data/download-command-file.txt
 
 write-download-command-file:
