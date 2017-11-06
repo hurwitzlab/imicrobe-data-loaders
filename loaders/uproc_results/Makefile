@@ -6,6 +6,11 @@ ils-imicrobe-projects:
 	mkdir -p data
 	ils -r /iplant/home/shared/imicrobe/projects > data/ils_imicrobe_project_listing.txt
 
+test-write-download-command-file:
+	python write_download_command_file.py \
+		--line-limit 100 \
+		--results-target-dp ${HOME}/usr/local/imicrobe/projects > data/download-command-file.txt
+
 write-download-command-file:
 	python write_download_command_file.py --results-target-dp ${HOME}/usr/local/imicrobe/projects > data/download-command-file.txt
 
