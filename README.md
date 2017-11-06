@@ -20,7 +20,7 @@ See the imicrobe-python-orm  [README](https://github.com/hurwitzlab/imicrobe-pyt
 Clone this repository to run the scripts.
 
 ### Usage: Load UProC Pfam results
-Execute `make ils-imicrobe-projects` to create a file list of the iRODS iMicrobe project directories. By default the list will be written to the `data` directory. This step took 83 minutes on a laptop. Maybe run this on a machine with a faster network connection such as lytic or stampede2.
+Execute `make ils-imicrobe-projects` to create a file list of the iRODS iMicrobe project directories. By default the list will be written to the `data` directory. This step took 83 minutes on a laptop, 4 minutes on myo.
 
 Execute `make write-download-command-file` to create a file of `iget` commands suitable for GNU `parallel`.
 
