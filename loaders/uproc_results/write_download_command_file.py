@@ -89,7 +89,7 @@ def main():
                     'iget -K {source} {target};chmod agu+r {target}\n'.format(
                         source=uproc_results_irods_path, target=local_uproc_results_fp))
 
-            elif line.endswith('.uproc.pfam') and current_collection is not None:
+            elif line.endswith('.uproc.pfam28') and current_collection is not None:
                 # we have a UProC Pfam result file
                 uproc_pfam_results_count += 1
                 uproc_results_irods_path = os.path.join(current_collection, line)
