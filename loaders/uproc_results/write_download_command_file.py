@@ -58,28 +58,44 @@ def main():
         """
         # the first line is the top-level directory
         # slice off the colon
-        uproc_results_count = 0
+        uproc_kegg_results_count = 0
+        uproc_pfam_results_count = 0
         current_collection = None
         imicrobe_root = ils_listing.readline().strip()[:-1]
         for line in take(line_limit, (line_.strip() for line_ in ils_listing)):
             if line.startswith('C-'):
                 pass
+
             elif line.startswith(imicrobe_root):
                 # slice off the colon
                 current_collection = line.strip()[:-1]
-            elif line.endswith('.uproc') and current_collection is not None:
-                # we have a UProC result file
-                uproc_results_count += 1
+
+            elif line.endswith('.uproc.kegg') and current_collection is not None:
+                # we have a UProC KEGG result file
+                uproc_kegg_results_count += 1
                 uproc_results_irods_path = os.path.join(current_collection, line)
                 local_project_sample_dp = os.path.join(results_target_dp, current_collection[len(imicrobe_root)+1:])
                 local_uproc_results_fp = os.path.join(local_project_sample_dp, line)
                 sys.stdout.write('mkdir -p {dir};chmod agu+rx {dir};'.format(dir=os.path.dirname(local_uproc_results_fp)))
                 sys.stdout.write('iget -K {source} {target};chmod agu+r {target}\n'.format(source=uproc_results_irods_path, target=local_uproc_results_fp))
+
+            elif line.endswith('.uproc.pfam') and current_collection is not None:
+                # we have a UProC Pfam result file
+                uproc_pfam_results_count += 1
+                uproc_results_irods_path = os.path.join(current_collection, line)
+                local_project_sample_dp = os.path.join(results_target_dp, current_collection[len(imicrobe_root) + 1:])
+                local_uproc_results_fp = os.path.join(local_project_sample_dp, line)
+                sys.stdout.write(
+                    'mkdir -p {dir};chmod agu+rx {dir};'.format(dir=os.path.dirname(local_uproc_results_fp)))
+                sys.stdout.write(
+                    'iget -K {source} {target};chmod agu+r {target}\n'.format(source=uproc_results_irods_path,
+                                                                              target=local_uproc_results_fp))
             else:
                 # a file of no interest
                 pass
 
-        sys.stderr.write('found {} files with UProC results\n'.format(uproc_results_count))
+        sys.stderr.write('found {} files with UProC KEGG results\n'.format(uproc_kegg_results_count))
+        sys.stderr.write('found {} files with UProC Pfam results\n'.format(uproc_pfam_results_count))
 
 
 def take(n, iterable):
