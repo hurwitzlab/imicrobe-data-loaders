@@ -55,9 +55,8 @@ export LAUNCHER_JOB_FILE=copy_uproc_kegg_to_iplant.joblist
 export LAUNCHER_WORKDIR=`pwd`
 echo "LAUNCHER_WORKDIR: $LAUNCHER_WORKDIR"
 
-# by default LAUNCHER_PPN is 8 (?)
 # use LAUNCHER_PPN to control the number of jobs on each node
-export LAUNCHER_PPN=4
+export LAUNCHER_PPN=60
 
 $LAUNCHER_DIR/paramrun
 
