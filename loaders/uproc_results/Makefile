@@ -15,7 +15,7 @@ write-download-command-file:
 	python write_download_command_file.py --results-target-dp ${HOME}/usr/local/imicrobe/data/uproc/projects > data/download-command-file.txt
 
 parallel-iget-uproc-results:
-	cat data/download-command-file.txt | parallel --eta -j 100 --load 80% --noswap '{}'
+	cat data/download-command-file.txt | parallel --eta -j 5 --load 80% --noswap '{}'
 
 write-load-sample-to-uproc-command-file:
 	python load_sample_to_uproc_table.py --results-root-dp ${HOME}/usr/local/imicrobe/data/uproc/projects > data/load-sample-to-uproc-command-file.txt
