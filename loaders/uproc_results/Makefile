@@ -9,10 +9,10 @@ ils-imicrobe-projects:
 test-write-download-command-file:
 	python write_download_command_file.py \
 		--line-limit 1000 \
-		--results-target-dp ${HOME}/usr/local/imicrobe/projects > data/download-command-file.txt
+		--results-target-dp ${HOME}/usr/local/imicrobe/data/uproc/projects > data/download-command-file.txt
 
 write-download-command-file:
-	python write_download_command_file.py --results-target-dp ${HOME}/usr/local/imicrobe/projects > data/download-command-file.txt
+	python write_download_command_file.py --results-target-dp ${HOME}/usr/local/imicrobe/data/uproc/projects > data/download-command-file.txt
 
 parallel-iget-uproc-results:
 	cat data/download-command-file.txt | parallel --eta -j 100 --load 80% --noswap '{}'
