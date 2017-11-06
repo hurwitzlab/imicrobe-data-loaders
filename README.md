@@ -1,22 +1,32 @@
-# imicrobe-load-uproc-results
+# iMicrobe Data Loaders
+Scripts to load various data into the iMicrobe database.
+
+  + camera_envo
+  + uproc_results
+
+## camera_envo
+Load CAMERA metadata.
+
+
+## imicrobe-load-uproc-results
 Scripts to load UProC results into the iMicrobe database.
 
-## Requirements
+### Requirements
 These scripts require iRODS, `make`, GNU `parallel`, a Python 3.6+ interpreter, and ORM classes generated
 by [imicrobe-python-orm](https://github.com/hurwitzlab/imicrobe-python-orm).
-See the project [README](https://github.com/hurwitzlab/imicrobe-python-orm) for installation instructions.
+See the imicrobe-python-orm  [README](https://github.com/hurwitzlab/imicrobe-python-orm) for instructions on generating the ORM classes.
 
-## Installation
+### Installation
 Clone this repository to run the scripts.
 
-## Usage
-Execute `make ils-imicrobe-projects` to create a file list of the iRODS iMicrobe project directories.
+### Usage
+Execute `make ils-imicrobe-projects` to create a file list of the iRODS iMicrobe project directories. By default the list will be written to the `data` directory. This step took 83 minutes on a laptop. Maybe run this on a machine with a faster network connection such as lytic or stampede2.
 
-Execute `make write-download-command-file` to create a file of commands suitable for GNU Parallel.
+Execute `make write-download-command-file` to create a file of `iget` commands suitable for GNU `parallel`.
 
 Execute `make parallel-iget-uproc-results` to do the deed. This should take less than an hour. Try `-j 100` for fun.
 
-Run `make download-pfam-data` to get the necessary Pfam files.
+Execute `make download-pfam-data` to get the necessary Pfam files.
 
 Execute `python load_pfam_table.py` to load Pfam annotations into the uproc table.
 This will first drop the uproc table and delete all rows from the sample_to_uproc table.

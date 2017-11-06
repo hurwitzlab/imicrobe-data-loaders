@@ -3,6 +3,7 @@ download-pfam-data:
 	wget ftp://ftp.ebi.ac.uk/pub/databases/Pfam/current_release/database_files/dead_family.txt.gz data/dead_family.txt.gz
 
 ils-imicrobe-projects:
+	mkdir -p data
 	ils -r /iplant/home/shared/imicrobe/projects > data/ils_imicrobe_project_listing.txt
 
 write-download-command-file:
@@ -22,6 +23,12 @@ myo-rsync-dry-run:
 
 myo-rsync:
 	rsync -arvzP --delete --exclude-from=rsync.exclude -e "ssh -A -t hpc ssh -A -t myo" ./ :project/imicrobe/imicrobe-load-uproc-results
+
+lytic-rsync-dry-run:
+	rsync -n -arvzP --delete --exclude-from=rsync.exclude -e "ssh -A -t hpc ssh -A -t lytic" ./ :project/imicrobe/imicrobe-load-uproc-results
+
+lytic-rsync:
+	rsync -arvzP --delete --exclude-from=rsync.exclude -e "ssh -A -t hpc ssh -A -t lytic" ./ :project/imicrobe/imicrobe-load-uproc-results
 
 stampede-scp-results:
 	scp imicrobe@stampede.tacc.utexas.edu:/home1/05066/imicrobe/jkl/process_uproc_results/uproc_results.txt.gz data/uproc_results.txt.gz

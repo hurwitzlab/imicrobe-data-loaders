@@ -6,8 +6,7 @@ import time
 import sqlalchemy as sa
 from sqlalchemy.orm import sessionmaker
 
-from imicrobe_model import models
-from uproc_models import SampleToUproc, Uproc
+from loaders.uproc_results.uproc_models import SampleToUproc, Uproc
 
 
 def main():
