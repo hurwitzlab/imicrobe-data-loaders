@@ -46,13 +46,15 @@ def write_job_file(argv):
 
                     fs_source_file_path = os.path.join(root, file_name)
 
+                    # do not allow irods_partial_dir_path to be absolute or os.path.join will ignore it (see docs)
+                    irods_partial_dir_path = root[len(args.fs_source_dir)+1:]
                     irods_target_dir_path = os.path.join(
                         args.irods_target_dir,
-                        root[len(args.fs_source_dir):])
+                        irods_partial_dir_path)
 
                     irods_target_file_path = os.path.join(irods_target_dir_path, file_name)
 
-                    job_file.write('imkdir {}; iput -K {} {}\n'.format(
+                    job_file.write('module load irods; imkdir {}; iput -K {} {}\n'.format(
                         irods_target_dir_path,
                         fs_source_file_path,
                         irods_target_file_path))
