@@ -38,7 +38,7 @@ def write_job_file(argv):
                     # construct the irods target file path
                     # by cutting the fs-source directory off of root
                     # and joining what remains to irods-target, for example
-                    #   root = '/work/imicrobe/data/projects/1/sample/1'
+                    #        root = '/work/imicrobe/data/projects/1/sample/1'
                     #   fs-source = '/work/imicrobe/data/projects'
                     #   irods-target = '/iplant/home/shared/imicrobe/data/projects
                     #
@@ -58,12 +58,15 @@ def write_job_file(argv):
                         irods_target_file_path))
 
                     job_count += 1
-                    if args.job_limit and args.job_limit == job_count:
-                        break
 
                 else:
                     # ignore this file
                     pass
+
+            if (args.job_limit is not None) and (args.job_limit <= job_count):
+                break
+
+
 
     print('wrote {} jobs to "{}"'.format(job_count, args.job_file))
 
