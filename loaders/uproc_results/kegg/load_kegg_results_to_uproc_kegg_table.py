@@ -10,6 +10,7 @@ Run with --uproc-kegg-results-fp to load one file of UProC results in to the iMi
 
 """
 import argparse
+from collections import defaultdict
 import io
 import itertools
 import os
@@ -29,12 +30,17 @@ def get_args():
     argparser.add_argument('--drop-tables',
                            action='store_true',
                            default=False,
-                           help='drop the KEGG table')
+                           help='drop UProC KEGG result table and KEGG annotation table')
+
+    argparser.add_argument('--drop-uproc-kegg-results-table',
+                           action='store_true',
+                           default=False,
+                           help='drop UProC KEGG result table')
 
     argparser.add_argument('--create-tables',
                            action='store_true',
                            default=False,
-                           help='create the KEGG table')
+                           help='create the KEGG tables')
 
     argparser.add_argument('--results-root-dp',
                            help='path to root of results directory tree')
@@ -71,9 +77,13 @@ def main():
     session = Session()
 
     if args.drop_tables:
-        drop_tables(meta, imicrobe_engine)
+        drop_table('uproc_kegg_result', meta, imicrobe_engine)
+        drop_table('kegg_annotation', meta, imicrobe_engine)
+    elif args.drop_uproc_kegg_results_table:
+        drop_table('uproc_kegg_result', meta, imicrobe_engine)
     elif args.create_tables:
-        create_tables(meta, imicrobe_engine)
+        create_table('kegg_annotation', meta, imicrobe_engine)
+        create_table('uproc_kegg_result', meta, imicrobe_engine)
     elif args.results_root_dp:
         ##drop_table(SampleToUpro, engine=imicrobe_engine)
         ##SampleToUproc.__table__.create(imicrobe_engine)
@@ -94,11 +104,6 @@ def main():
         print('specify either --results-root-dp or --uproc-results-fp')
 
 
-def drop_tables(meta, engine):
-    drop_table('uproc_kegg_result', meta, engine)
-    drop_table('kegg_annotation', meta, engine)
-
-
 def drop_table(table_name, meta, engine):
     # delete the relationship table first
     if table_name in meta.tables:
@@ -108,11 +113,20 @@ def drop_table(table_name, meta, engine):
         sys.stderr.write('table "{}" does not exist\n'.format(table_name))
 
 
-def create_tables(meta, engine):
+def create_table(table_name, meta, engine):
     from loaders.uproc_results.kegg.models import Kegg_annotation, Uproc_kegg_result
 
-    Kegg_annotation.__table__.create(engine)
-    Uproc_kegg_result.__table__.create(engine)
+    #print([table for table in meta.tables])
+    if table_name in meta.tables:
+        print('table "{}" already exists'.format(table_name))
+    elif table_name == 'kegg_annotation':
+        print('creating table "{}"'.format(Kegg_annotation.__tablename__))
+        Kegg_annotation.__table__.create(engine)
+    elif table_name == 'uproc_kegg_result':
+        print('creating table "{}"'.format(Uproc_kegg_result.__tablename__))
+        Uproc_kegg_result.__table__.create(engine)
+    else:
+        raise Exception('unknown table "{}"'.format(table_name))
 
 
 def take(n, iterable):
@@ -175,59 +189,59 @@ def load_all_samples_to_uproc_kegg_table_from_directory_tree(dir_root, session, 
                         time.time()-t0, file_line_count, file_count, file_name, time.time()-t00))
 
     print('found {} KEGG ids'.format(len(kegg_ids)))
+    print(sorted(kegg_ids)[:10])
+
+    # get all KEGG ids for the annotations that are already in the database
+    downloaded_kegg_annotations = {s[0] for s in session.query(Kegg_annotation.kegg_annotation_id).all()}
+    print('found {} KEGG annotations in the database'.format(len(downloaded_kegg_annotations)))
+    print(sorted(downloaded_kegg_annotations)[:10])
+
+    kegg_annotations_needed = set()
 
     t0 = time.time()
-    downloaded_kegg_annotations = set()
-    download_failed_kegg_ids = set()
     for kegg_id in kegg_ids:
-
         if kegg_id in downloaded_kegg_annotations:
             # no need to check the database for this kegg annotation
             #print('KEGG id {} has already been downloaded'.format(kegg_id))
             pass
-        elif kegg_id in download_failed_kegg_ids:
-            print('KEGG id {} can not be downloaded')
         else:
-            kegg_annotation = session.query(
-                Kegg_annotation).filter(
-                    Kegg_annotation.kegg_annotation_id == kegg_id).one_or_none()
-            if kegg_annotation is not None:
-                # no need to insert this kegg_id in the kegg_annotations table
-                # why was it not in downloaded_kegg_annotations?
-                pass
-            else:
-                # download and insert
-                #print('failed to find KEGG id "{}"'.format(kegg_id))
-                #print('  downloading KEGG annotation {}'.format(len(downloaded_kegg_annotations) + 1))
+            kegg_annotations_needed.add(kegg_id)
 
-                kegg_annotation_response = requests.get('http://rest.kegg.jp/get/ko:{}'.format(kegg_id))
-                if kegg_annotation_response.status_code == 200:
-                    name, definition, pathway, module = parse_kegg_response(
-                        kegg_annotation_response.text)
+    print('need to download {} KEGG annotations'.format(len(kegg_annotations_needed)))
+    print(sorted(kegg_annotations_needed)[:10])
 
-                    if name is None:
-                        # something bad happened
-                        print('  failed to parse response from {}'.format(kegg_annotation_response.url))
-                    else:
-                        session.add(
-                            Kegg_annotation(
-                                kegg_annotation_id=kegg_id,
-                                name=name,
-                                definition=definition,
-                                pathway=pathway,
-                                module=module))
-
-                        downloaded_kegg_annotations.add(kegg_id)
-
-                        if len(downloaded_kegg_annotations) % 100 == 0:
-                            print('{} KEGG annotations downloaded in {:10.1f}s'.format(
-                                len(downloaded_kegg_annotations), time.time() - t0))
-
+    download_failed_kegg_ids = set()
+    for kegg_id_group_ in grouper(sorted(kegg_annotations_needed), n=10, fillvalue=None):
+        kegg_id_group = [k for k in kegg_id_group_ if k is not None]
+        ko_id_list = '+'.join(['ko:{}'.format(k) for k in kegg_id_group])
+        kegg_annotation_response = requests.get('http://rest.kegg.jp/get/{}'.format(ko_id_list))
+        if kegg_annotation_response.status_code == 200:
+            ko_annotations = parse_kegg_response(kegg_annotation_response.text)
+            # it can happen that some ko_ids are not found
+            # in these cases there is no entry for the ko_id
+            for kegg_id in sorted(kegg_id_group):
+                if kegg_id in ko_annotations:
+                    downloaded_kegg_annotations.add(kegg_id)
+                    session.add(
+                        Kegg_annotation(
+                            kegg_annotation_id=kegg_id,
+                            name=ko_annotations[kegg_id]['NAME'],
+                            definition=ko_annotations[kegg_id]['DEFINITION'],
+                            pathway=ko_annotations[kegg_id].get('PATHWAY', ''),
+                            module=ko_annotations[kegg_id].get('MODULE', '')))
+                    if len(downloaded_kegg_annotations) % 100 == 0:
+                        print('{} KEGG annotations downloaded in {:10.1f}s'.format(
+                            len(downloaded_kegg_annotations), time.time() - t0))
                 else:
-                    print('  DOWNLOAD FAILED for "{}"'.format(kegg_annotation_response.url))
                     download_failed_kegg_ids.add(kegg_id)
-    print('  downloaded {} KEGG ids'.format(
-        len(downloaded_kegg_annotations), file_line_count))
+                    print('  DOWNLOAD FAILED for "{}"'.format(kegg_id))
+        else:
+            print('status code {} for "{}"'.format(
+                kegg_annotation_response.status_code,
+                kegg_annotation_response.url))
+            download_failed_kegg_ids.update(kegg_id_group)
+
+    print('downloaded {} KEGG ids'.format(len(downloaded_kegg_annotations)))
     # commit all kegg annotations at the end
     session.commit()
 
@@ -261,13 +275,15 @@ def load_all_samples_to_uproc_kegg_table_from_directory_tree(dir_root, session, 
                         kegg_id, read_count = line.strip().split(',')
                         if kegg_id in download_failed_kegg_ids:
                             pass
-                        else:
+                        elif kegg_id in downloaded_kegg_annotations:
                             session.add(
                                 Uproc_kegg_result(
                                     sample_id=sample_id,
                                     kegg_annotation_id=kegg_id,
                                     read_count=int(read_count)))
                             file_results_count += 1
+                        else:
+                            print('what happened? "{}"'.format(kegg_id))
 
                     uproc_kegg_results_files.append(file_name)
 
@@ -352,71 +368,80 @@ def load_sample_to_uproc_table_from_file(uproc_results_fp, session, engine):
                 time.time() - t0))
 
 
-name_re = re.compile(r'^NAME(\s+)(?P<name>.+)$')
-definition_re = re.compile(r'^DEFINITION(\s+)(?P<definition>.+)$')
-pathway_re = re.compile(r'^(PATHWAY)?(\s+)(?P<pathway>.+)$')
-module_re = re.compile(r'^(MODULE)?(\s+)(?P<module>.+)$')
-other_re = re.compile(r'^([A-Z]+)(\s+)(.+)$')
+kegg_orthology_field_re = re.compile(r'^(?P<field_name>[A-Z]+)?(\s+)(?P<field_value>.+)$')
 
 def parse_kegg_response(response):
     """ response looks like this:
-          ENTRY       K01467                      KO
-          NAME        ampC
-          DEFINITION  beta-lactamase class C [EC:3.5.2.6]
-          PATHWAY     ko01501  beta-Lactam resistance
-                      ko02020  Two-component system
-          MODULE      M00628  beta-Lactam resistance, AmpC system
+            ENTRY       K01467                      KO
+            NAME        ampC
+            DEFINITION  beta-lactamase class C [EC:3.5.2.6]
+            PATHWAY     ko01501  beta-Lactam resistance
+                        ko02020  Two-component system
+            MODULE      M00628  beta-Lactam resistance, AmpC system
+            ...
+            ENTRY       K00154                      KO
+            NAME        E1.2.1.68
+            DEFINITION  coniferyl-aldehyde dehydrogenase [EC:1.2.1.68]
+            BRITE       Enzymes [BR:ko01000]
+                         1. Oxidoreductases
+                          1.2  Acting on the aldehyde or oxo group of donors
+                           1.2.1  With NAD+ or NADP+ as acceptor
+                            1.2.1.68  coniferyl-aldehyde dehydrogenase
+                             K00154  E1.2.1.68; coniferyl-aldehyde dehydrogenase
+            DBLINKS     COG: COG1012
+                        GO: 0050269
+            GENES       GQU: AWC35_21175
+                        CED: LH89_09310 LH89_19560
+                        SMW: SMWW4_v1c32370
+                        SMAR: SM39_2711
+                        SMAC: SMDB11_2482
+            ...
+
+    return: a dictionary of dictionaries that looks like this
+        {
+            'K01467': {
+                'ENTRY': 'K01467                      KO',
+                'NAME': 'ampC',
+                'DEFINITION': '',
+                'PATHWAY': '',
+                'MODULE': '',
+                ...
+            },
+            'K00154': {
+                'ENTRY': 'K00154                      KO',
+                'NAME': 'E1.2.1.68',
+                'DEFINITION': '',
+                'PATHWAY': '',
+                'MODULE': '',
+                ...
+            }
+
+        }
     """
 
     debug = False
 
-    response_buffer = io.StringIO(response)
-    entry_line = response_buffer.readline()
-    name_line = response_buffer.readline()
-    name = name_re.search(name_line).group('name')
-    if debug: print('  name: "{}"'.format(name))
-    definition_line = response_buffer.readline()
-    definition = definition_re.search(definition_line).group('definition')
-    if debug: print('  definition: "{}"'.format(definition))
-
-    pathway = []
-    module = []
-    parsing_section = ''
-    for line in response_buffer.readlines():
-        line = line.rstrip()
-
-        if line.startswith('PATHWAY'):
-            parsing_section = 'pathway'
-        elif line.startswith('MODULE'):
-            parsing_section = 'module'
-        elif other_re.search(line):
-            break
-        #elif line.startswith('BRITE'):
-        #    break
-        #elif line.startswith('DBLINKS'):
-        #    break
-        #elif line.startswith('DISEASE'):
-        #    break
+    all_entries = defaultdict(lambda : defaultdict(list))
+    kegg_id = None
+    field_name = None
+    for line in io.StringIO(response).readlines():
+        field_match = kegg_orthology_field_re.search(line.rstrip())
+        if field_match is None:
+            # this line is /// to separate entries
+            pass
+        elif 'field_name' in field_match.groupdict():
+            field_name = field_match.group('field_name')
+            field_value = field_match.group('field_value')
+            if field_name == 'ENTRY':
+                kegg_id, *_ = field_value.split(' ')
+                #print('KEGG id: "{}"'.format(kegg_id))
         else:
+            # just a field value is present
             pass
 
-        if debug: print(line)
-        if parsing_section == 'pathway':
-            pathway.append(pathway_re.search(line).group('pathway'))
-        elif parsing_section == 'module':
-            module.append(module_re.search(line).group('module'))
-        else:
-            print('something is wrong')
-            print('current line is "{}"'.format(line))
-            return None, None, None, None
+        all_entries[kegg_id][field_name].append(field_value)
 
-    pathway = '\n'.join(pathway)
-    module = '\n'.join(module)
-
-    if debug: print('  pathway: "{}"'.format(pathway))
-    if debug: print('  module: "{}"'.format(module))
-
-    return name, definition, pathway, module
+    return all_entries
 
 
 if __name__ == '__main__':
