@@ -150,8 +150,7 @@ def load_all_samples_to_uproc_kegg_table_from_directory_tree(dir_root, session, 
     start_time = time.time()
     t0 = time.time()
     file_count = 0
-    downloaded_kegg_annotations = set()
-    download_failed_kegg_ids = set()
+    kegg_ids = set()
     for root, dirs, files in os.walk(dir_root):
         for file_name in files:
             if file_name.endswith('.uproc.kegg'):
@@ -166,52 +165,69 @@ def load_all_samples_to_uproc_kegg_table_from_directory_tree(dir_root, session, 
                     #   ... and so on ...
                     t00 = time.time()
                     file_line_count = 0
-                    file_downloaded_kegg_annotations = []
                     for line in take(line_limit, uproc_kegg_results_file):
                         kegg_id, read_count = line.strip().split(',')
                         file_line_count += 1
 
-                        if kegg_id in downloaded_kegg_annotations:
-                            # no need to check the database for this kegg annotation
-                            #print('KEGG id {} has already been downloaded'.format(kegg_id))
-                            pass
-                        elif kegg_id in download_failed_kegg_ids:
-                            print('KEGG id {} can not be downloaded')
-                        else:
-                            kegg_annotation = session.query(
-                                Kegg_annotation).filter(
-                                    Kegg_annotation.kegg_annotation_id == kegg_id).one_or_none()
-                            if kegg_annotation is not None:
-                                # no need to insert this kegg_id in the kegg_annotations table
-                                # why was it not in downloaded_kegg_annotations?
-                                pass
-                            else:
-                                # download and insert
-                                #print('failed to find KEGG id "{}"'.format(kegg_id))
-                                #print('  downloading KEGG annotation {}'.format(len(downloaded_kegg_annotations) + 1))
+                        kegg_ids.add(kegg_id)
 
-                                kegg_annotation_response = requests.get('http://rest.kegg.jp/get/ko:{}'.format(kegg_id))
-                                if kegg_annotation_response.status_code == 200:
-                                    name, definition, pathway, module = parse_kegg_response(
-                                        kegg_annotation_response.text)
-                                    session.add(
-                                        Kegg_annotation(
-                                            kegg_annotation_id=kegg_id,
-                                            name=name,
-                                            definition=definition,
-                                            pathway=pathway,
-                                            module=module))
-
-                                    file_downloaded_kegg_annotations.append(kegg_id)
-                                    downloaded_kegg_annotations.add(kegg_id)
-
-                                else:
-                                    print('  DOWNLOAD FAILED for "{}"'.format(kegg_id))
-                                    download_failed_kegg_ids.add(kegg_id)
                     print('{:<10.1f}s: parsed {} line(s) of file {}: "{}" in {:5.1f}s'.format(
                         time.time()-t0, file_line_count, file_count, file_name, time.time()-t00))
-                    print('  downloaded {} of {} KEGG ids'.format(
-                        len(file_downloaded_kegg_annotations), file_line_count))
+
+    print('found {} KEGG ids'.format(len(kegg_ids)))
+
+    t0 = time.time()
+    downloaded_kegg_annotations = set()
+    download_failed_kegg_ids = set()
+    for kegg_id in kegg_ids:
+
+        if kegg_id in downloaded_kegg_annotations:
+            # no need to check the database for this kegg annotation
+            #print('KEGG id {} has already been downloaded'.format(kegg_id))
+            pass
+        elif kegg_id in download_failed_kegg_ids:
+            print('KEGG id {} can not be downloaded')
+        else:
+            kegg_annotation = session.query(
+                Kegg_annotation).filter(
+                    Kegg_annotation.kegg_annotation_id == kegg_id).one_or_none()
+            if kegg_annotation is not None:
+                # no need to insert this kegg_id in the kegg_annotations table
+                # why was it not in downloaded_kegg_annotations?
+                pass
+            else:
+                # download and insert
+                #print('failed to find KEGG id "{}"'.format(kegg_id))
+                #print('  downloading KEGG annotation {}'.format(len(downloaded_kegg_annotations) + 1))
+
+                kegg_annotation_response = requests.get('http://rest.kegg.jp/get/ko:{}'.format(kegg_id))
+                if kegg_annotation_response.status_code == 200:
+                    name, definition, pathway, module = parse_kegg_response(
+                        kegg_annotation_response.text)
+
+                    if name is None:
+                        # something bad happened
+                        print('  failed to parse response from {}'.format(kegg_annotation_response.url))
+                    else:
+                        session.add(
+                            Kegg_annotation(
+                                kegg_annotation_id=kegg_id,
+                                name=name,
+                                definition=definition,
+                                pathway=pathway,
+                                module=module))
+
+                        downloaded_kegg_annotations.add(kegg_id)
+
+                        if len(downloaded_kegg_annotations) % 100 == 0:
+                            print('{} KEGG annotations downloaded in {:10.1f}s'.format(
+                                len(downloaded_kegg_annotations), time.time() - t0))
+
+                else:
+                    print('  DOWNLOAD FAILED for "{}"'.format(kegg_annotation_response.url))
+                    download_failed_kegg_ids.add(kegg_id)
+    print('  downloaded {} KEGG ids'.format(
+        len(downloaded_kegg_annotations), file_line_count))
     # commit all kegg annotations at the end
     session.commit()
 
@@ -261,7 +277,7 @@ def load_all_samples_to_uproc_kegg_table_from_directory_tree(dir_root, session, 
         # commit after parsing each file
         session.commit()
 
-    print('downloaded and inserted {} UProC KEGG results in {:5.1f}s\n'.format(
+    print('inserted {} UProC KEGG results in {:5.1f}s\n'.format(
         len(downloaded_kegg_annotations), time.time()-t0))
 
     print('failed to download {} annotation(s):\n\t{}'.format(
@@ -340,6 +356,7 @@ name_re = re.compile(r'^NAME(\s+)(?P<name>.+)$')
 definition_re = re.compile(r'^DEFINITION(\s+)(?P<definition>.+)$')
 pathway_re = re.compile(r'^(PATHWAY)?(\s+)(?P<pathway>.+)$')
 module_re = re.compile(r'^(MODULE)?(\s+)(?P<module>.+)$')
+other_re = re.compile(r'^([A-Z]+)(\s+)(.+)$')
 
 def parse_kegg_response(response):
     """ response looks like this:
@@ -372,12 +389,14 @@ def parse_kegg_response(response):
             parsing_section = 'pathway'
         elif line.startswith('MODULE'):
             parsing_section = 'module'
-        elif line.startswith('BRITE'):
+        elif other_re.search(line):
             break
-        elif line.startswith('DBLINKS'):
-            break
-        elif line.startswith('DISEASE'):
-            break
+        #elif line.startswith('BRITE'):
+        #    break
+        #elif line.startswith('DBLINKS'):
+        #    break
+        #elif line.startswith('DISEASE'):
+        #    break
         else:
             pass
 
@@ -388,7 +407,8 @@ def parse_kegg_response(response):
             module.append(module_re.search(line).group('module'))
         else:
             print('something is wrong')
-            quit()
+            print('current line is "{}"'.format(line))
+            return None, None, None, None
 
     pathway = '\n'.join(pathway)
     module = '\n'.join(module)
