@@ -49,7 +49,7 @@ class Kegg_annotation(models.Model):
     name = sa.Column('name', sa.VARCHAR(80))
 
     # beta-lactamase class C [EC:3.5.2.6]
-    definition = sa.Column('definition', sa.VARCHAR(200))
+    definition = sa.Column('definition', sa.TEXT())
 
     # ko01501  beta-Lactam resistance
     # ko02020  Two-component system
