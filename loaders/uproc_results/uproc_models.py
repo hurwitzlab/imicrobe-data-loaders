@@ -24,7 +24,6 @@ class Uproc(models.Model):
     sample_list = relationship('Sample', secondary='sample_to_uproc')
 
 
-
 class SampleToUproc(models.Model):
     __tablename__ = 'sample_to_uproc'
     __table_args__ = (
