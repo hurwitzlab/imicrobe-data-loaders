@@ -28,7 +28,7 @@ class Uproc_kegg_result(models.Model):
         'kegg_annotation_id',
         sa.String(16),
         sa.ForeignKey('kegg_annotation.kegg_annotation_id', ondelete='CASCADE'),
-        unique=True)
+        nullable=False)
 
     read_count = sa.Column('read_count', sa.Integer)
 
