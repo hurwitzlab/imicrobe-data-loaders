@@ -54,3 +54,13 @@ copy-uproc-kegg-results-to-iplant:
 		--fs-source /work/05066/imicrobe/iplantc.org/data/imicrobe/projects \
 		--irods-target /iplant/home/shared/imicrobe/projects
 	cd work; sbatch stampede2_copy_uproc_kegg_to_iplant.sh
+
+drop-and-create-uproc-kegg-tables:
+	python kegg/load_kegg_results_to_uproc_kegg_table.py --drop-tables
+	python kegg/load_kegg_results_to_uproc_kegg_table.py --create-tables
+
+write-load-uproc-kegg-tables-command-file:
+	python kegg/load_kegg_results_to_uproc_kegg_table.py --results-root-dp ${HOME}/usr/local/imicrobe/data/uproc/projects > data/load-uproc-kegg-tables-command-file.txt
+
+parallel-load-uproc-kegg-tables:
+	cat data/load-uproc-kegg-tables-command-file.txt | parallel --eta -j 5 --load 80% --noswap '{}'
