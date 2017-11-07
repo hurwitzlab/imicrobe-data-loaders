@@ -222,8 +222,8 @@ def parse_kegg_response(response):
     definition = definition_re.search(definition_line).group('definition')
     print('  definition: "{}"'.format(definition))
 
-    pathway = ''
-    module = ''
+    pathway = []
+    module = []
     parsing_section = ''
     for line in response_buffer.readlines():
         line = line.rstrip()
@@ -243,13 +243,16 @@ def parse_kegg_response(response):
 
         print(line)
         if parsing_section == 'pathway':
-            pathway += pathway_re.search(line).group('pathway')
+            pathway.append(pathway_re.search(line).group('pathway'))
         elif parsing_section == 'module':
-            module += module_re.search(line).group('module')
+            module.append(module_re.search(line).group('module'))
         else:
             print('something is wrong')
             quit()
 
+    pathway = '\n'.join(pathway)
+    module = '\n'.join(module)
+    
     print('  pathway: "{}"'.format(pathway))
     print('  module: "{}"'.format(module))
 
