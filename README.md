@@ -39,3 +39,9 @@ Run 'make parallel-load-sample-to-uproc' to load the sample_to_uproc table.
 ### Usage: Load UProC KEGG results
 
 If UProC KEGG results need to be copied from TACC to /iplant/ execute `make copy-uproc-kegg-results-to-iplant` from stampede2.
+
+If the UProC KEGG results have not been copied to myo execute `make ils-imicrobe-projects write-download-command-file parallel-iget-uproc-results`.
+
+If the UProC KEGG database tables do not exist yet execute `make drop-and-create-uproc-kegg-tables`.
+
+To load the UProC KEGG database tables execute `make write-load-uproc-kegg-tables-command-file` followed by `make `
