@@ -64,3 +64,13 @@ write-load-uproc-kegg-tables-command-file:
 
 parallel-load-uproc-kegg-tables:
 	cat data/load-uproc-kegg-tables-command-file.txt | parallel --eta -j 5 --load 80% --noswap '{}'
+
+test-direct-load-uproc-kegg-tables:
+	python kegg/load_kegg_results_to_uproc_kegg_table.py \
+		--load-results-root-dp ${HOME}/usr/local/imicrobe/data/uproc/projects \
+		--line-limit 5
+
+direct-load-uproc-kegg-tables:
+	python kegg/load_kegg_results_to_uproc_kegg_table.py \
+			--load-results-root-dp ${HOME}/usr/local/imicrobe/data/uproc/projects \
+			> data/direct_load_uproc_kegg_tables.log
