@@ -101,7 +101,7 @@ def main():
                 local_uproc_results_fp = os.path.join(local_project_sample_dp, line)
 
                 if os.path.exists(local_uproc_results_fp):
-                    sys.stderr.write('local file exists: {}'.format(local_uproc_results_fp))
+                    sys.stderr.write('local file exists: {}\n'.format(local_uproc_results_fp))
                 else:
                     sys.stdout.write(
                         'mkdir -p {dir};chmod agu+rx {dir};'.format(dir=os.path.dirname(local_uproc_results_fp)))
