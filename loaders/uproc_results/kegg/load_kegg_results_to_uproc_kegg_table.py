@@ -301,31 +301,37 @@ def load_all_samples_to_uproc_kegg_table_from_directory_tree(dir_root, session_c
 
                 t00 = time.time()
                 file_results_count = 0
-                with open(uproc_kegg_results_fp, 'rt') as uproc_kegg_results_file, session_(session_class) as session:
+                try:
+                    with open(uproc_kegg_results_fp, 'rt') as uproc_kegg_results_file, session_(session_class) as session:
 
-                    # UProC results files look like this:
-                    #   K01467,4208
-                    #   K01990,660
-                    #   K07481,434
-                    #   ... and so on ...
-                    for line in take(line_limit, uproc_kegg_results_file):
-                        kegg_id, read_count = line.strip().split(',')
-                        if kegg_id in download_failed_kegg_ids:
-                            pass
-                        elif kegg_id in downloaded_kegg_annotations:
-                            session.add(
-                                Uproc_kegg_result(
-                                    sample_id=sample_id,
-                                    kegg_annotation_id=kegg_id,
-                                    read_count=int(read_count)))
-                            file_results_count += 1
-                        else:
-                            print('what happened? "{}"'.format(kegg_id))
+                        # UProC results files look like this:
+                        #   K01467,4208
+                        #   K01990,660
+                        #   K07481,434
+                        #   ... and so on ...
+                        for line in take(line_limit, uproc_kegg_results_file):
+                            kegg_id, read_count = line.strip().split(',')
+                            if kegg_id in download_failed_kegg_ids:
+                                pass
+                            elif kegg_id in downloaded_kegg_annotations:
+                                session.add(
+                                    Uproc_kegg_result(
+                                        sample_id=sample_id,
+                                        kegg_annotation_id=kegg_id,
+                                        read_count=int(read_count)))
+                                file_results_count += 1
+                            else:
+                                print('what happened? "{}"'.format(kegg_id))
 
-                    uproc_kegg_results_files.append(file_name)
+                        uproc_kegg_results_files.append(file_name)
 
-                print('finished file {}: "{}" with {} results in {:5.1f}s'.format(
-                    len(uproc_kegg_results_files), file_name, file_results_count, time.time()-t00))
+                    print('finished parsing file {}: "{}" with {} results in {:5.1f}s'.format(
+                        len(uproc_kegg_results_files), uproc_kegg_results_fp, file_results_count, time.time()-t00))
+
+                except Exception as e:
+                    # database integrity errors land here
+                    print(e)
+                    print('failed to insert data from file "{}"'.format(uproc_kegg_results_fp))
 
     print('inserted {} UProC KEGG results in {:5.1f}s\n'.format(
         len(downloaded_kegg_annotations), time.time()-t0))
