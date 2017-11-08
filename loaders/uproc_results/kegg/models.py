@@ -12,7 +12,7 @@ class Uproc_kegg_result(models.Model):
         'mysql_engine': 'InnoDB',
         'mysql_charset': 'utf8'})
 
-    uproc_kegg_id = sa.Column(
+    uproc_kegg_result_id = sa.Column(
         'uproc_kegg_result_id',
         mysql.INTEGER(unsigned=True),
         autoincrement=True,

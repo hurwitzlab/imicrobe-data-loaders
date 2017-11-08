@@ -23,6 +23,8 @@ import requests
 import sqlalchemy as sa
 from sqlalchemy.orm import sessionmaker
 
+from loaders.uproc_results.kegg.models import Kegg_annotation, Uproc_kegg_result
+
 
 def get_args():
     argparser = argparse.ArgumentParser()
@@ -41,6 +43,9 @@ def get_args():
                            action='store_true',
                            default=False,
                            help='create the KEGG tables')
+
+    argparser.add_argument('--list', action='store_true', default=False,
+                           help='list row of uproc_kegg_result table')
 
     argparser.add_argument('--results-root-dp',
                            help='path to root of results directory tree')
@@ -84,6 +89,8 @@ def main():
     elif args.create_tables:
         create_table('kegg_annotation', meta, imicrobe_engine)
         create_table('uproc_kegg_result', meta, imicrobe_engine)
+    elif args.list:
+        list_uproc_kegg_result_rows(session, imicrobe_engine)
     elif args.results_root_dp:
         ##drop_table(SampleToUpro, engine=imicrobe_engine)
         ##SampleToUproc.__table__.create(imicrobe_engine)
@@ -114,7 +121,7 @@ def drop_table(table_name, meta, engine):
 
 
 def create_table(table_name, meta, engine):
-    from loaders.uproc_results.kegg.models import Kegg_annotation, Uproc_kegg_result
+    #from loaders.uproc_results.kegg.models import Kegg_annotation, Uproc_kegg_result
 
     #print([table for table in meta.tables])
     if table_name in meta.tables:
@@ -127,6 +134,15 @@ def create_table(table_name, meta, engine):
         Uproc_kegg_result.__table__.create(engine)
     else:
         raise Exception('unknown table "{}"'.format(table_name))
+
+
+def list_uproc_kegg_result_rows(session, engine):
+    for row in session.query(Uproc_kegg_result).all():
+        print('id: {}, kegg: {}, sample: {}, read_count: {}'.format(
+            row.uproc_kegg_result_id,
+            row.kegg_annotation_id,
+            row.sample_id,
+            row.read_count))
 
 
 def take(n, iterable):
@@ -158,7 +174,7 @@ def write_command_file_from_directory_tree(dir_root):
 
 
 def load_all_samples_to_uproc_kegg_table_from_directory_tree(dir_root, session, engine, line_limit):
-    from loaders.uproc_results.kegg.models import Kegg_annotation, Uproc_kegg_result
+    #from loaders.uproc_results.kegg.models import Kegg_annotation, Uproc_kegg_result
 
     # load the kegg_annotations table first
     start_time = time.time()
