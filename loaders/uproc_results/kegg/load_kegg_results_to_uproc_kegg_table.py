@@ -232,6 +232,10 @@ def load_all_samples_to_uproc_kegg_table_from_directory_tree(dir_root, session, 
                     if len(downloaded_kegg_annotations) % 100 == 0:
                         print('{} KEGG annotations downloaded in {:10.1f}s'.format(
                             len(downloaded_kegg_annotations), time.time() - t0))
+
+                    if len(downloaded_kegg_annotations) % 1000 == 0:
+                        print('committing')
+                        session.commit()
                 else:
                     download_failed_kegg_ids.add(kegg_id)
                     print('  DOWNLOAD FAILED for "{}"'.format(kegg_id))
@@ -242,7 +246,8 @@ def load_all_samples_to_uproc_kegg_table_from_directory_tree(dir_root, session, 
             download_failed_kegg_ids.update(kegg_id_group)
 
     print('downloaded {} KEGG ids'.format(len(downloaded_kegg_annotations)))
-    # commit all kegg annotations at the end
+    # commit remaining kegg annotations
+    print('committing')
     session.commit()
 
     print('downloaded and inserted {} KEGG annotations in {:5.1f}s\n'.format(
