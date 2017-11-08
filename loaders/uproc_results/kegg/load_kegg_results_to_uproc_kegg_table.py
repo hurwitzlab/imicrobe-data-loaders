@@ -11,6 +11,7 @@ Run with --uproc-kegg-results-fp to load one file of UProC results in to the iMi
 """
 import argparse
 from collections import defaultdict
+from contextlib import contextmanager
 import io
 import itertools
 import os
@@ -34,7 +35,7 @@ def get_args():
                            default=False,
                            help='drop UProC KEGG result table and KEGG annotation table')
 
-    argparser.add_argument('--drop-uproc-kegg-results-table',
+    argparser.add_argument('--drop-uproc-kegg-result-table',
                            action='store_true',
                            default=False,
                            help='drop UProC KEGG result table')
@@ -78,19 +79,18 @@ def main():
     meta = sa.MetaData()
     meta.reflect(bind=imicrobe_engine)
 
-    Session = sessionmaker(bind=imicrobe_engine)
-    session = Session()
+    Session_class = sessionmaker(bind=imicrobe_engine)
 
     if args.drop_tables:
         drop_table('uproc_kegg_result', meta, imicrobe_engine)
         drop_table('kegg_annotation', meta, imicrobe_engine)
-    elif args.drop_uproc_kegg_results_table:
+    elif args.drop_uproc_kegg_result_table:
         drop_table('uproc_kegg_result', meta, imicrobe_engine)
     elif args.create_tables:
         create_table('kegg_annotation', meta, imicrobe_engine)
         create_table('uproc_kegg_result', meta, imicrobe_engine)
     elif args.list:
-        list_uproc_kegg_result_rows(session, imicrobe_engine)
+        list_uproc_kegg_result_rows(Session_class, imicrobe_engine)
     elif args.results_root_dp:
         ##drop_table(SampleToUpro, engine=imicrobe_engine)
         ##SampleToUproc.__table__.create(imicrobe_engine)
@@ -99,13 +99,13 @@ def main():
     elif args.load_results_root_dp:
         load_all_samples_to_uproc_kegg_table_from_directory_tree(
             dir_root=args.load_results_root_dp,
-            session=session,
+            session_class=Session_class,
             engine=imicrobe_engine,
             line_limit=args.line_limit)
     elif args.uproc_results_fp:
         load_sample_to_uproc_table_from_file(
             uproc_results_fp=args.uproc_results_fp,
-            session=session,
+            session_class=Session_class,
             engine=imicrobe_engine)
     else:
         print('specify either --results-root-dp or --uproc-results-fp')
@@ -136,13 +136,28 @@ def create_table(table_name, meta, engine):
         raise Exception('unknown table "{}"'.format(table_name))
 
 
-def list_uproc_kegg_result_rows(session, engine):
-    for row in session.query(Uproc_kegg_result).all():
-        print('id: {}, kegg: {}, sample: {}, read_count: {}'.format(
-            row.uproc_kegg_result_id,
-            row.kegg_annotation_id,
-            row.sample_id,
-            row.read_count))
+@contextmanager
+def session_(session_class):
+    """Provide a transactional scope around a series of operations."""
+    session = session_class()
+    try:
+        yield session
+        session.commit()
+    except:
+        session.rollback()
+        raise
+    finally:
+        session.close()
+
+
+def list_uproc_kegg_result_rows(session_class, engine):
+    with session_(session_class) as session:
+        for row in session.query(Uproc_kegg_result).all():
+            print('id: {}, kegg: {}, sample: {}, read_count: {}'.format(
+                row.uproc_kegg_result_id,
+                row.kegg_annotation_id,
+                row.sample_id,
+                row.read_count))
 
 
 def take(n, iterable):
@@ -173,7 +188,7 @@ def write_command_file_from_directory_tree(dir_root):
     sys.stderr.write('wrote {} lines in {:5.1f}s\n'.format(file_count, time.time()-start_time))
 
 
-def load_all_samples_to_uproc_kegg_table_from_directory_tree(dir_root, session, engine, line_limit):
+def load_all_samples_to_uproc_kegg_table_from_directory_tree(dir_root, session_class, engine, line_limit):
     #from loaders.uproc_results.kegg.models import Kegg_annotation, Uproc_kegg_result
 
     # load the kegg_annotations table first
@@ -208,7 +223,8 @@ def load_all_samples_to_uproc_kegg_table_from_directory_tree(dir_root, session, 
     print(sorted(kegg_ids)[:10])
 
     # get all KEGG ids for the annotations that are already in the database
-    downloaded_kegg_annotations = {s[0] for s in session.query(Kegg_annotation.kegg_annotation_id).all()}
+    with session_(session_class) as session:
+        downloaded_kegg_annotations = {s[0] for s in session.query(Kegg_annotation.kegg_annotation_id).all()}
     print('found {} KEGG annotations in the database'.format(len(downloaded_kegg_annotations)))
     print(sorted(downloaded_kegg_annotations)[:10])
 
@@ -228,43 +244,43 @@ def load_all_samples_to_uproc_kegg_table_from_directory_tree(dir_root, session, 
 
     download_failed_kegg_ids = set()
     for kegg_id_group_ in grouper(sorted(kegg_annotations_needed), n=10, fillvalue=None):
-        kegg_id_group = [k for k in kegg_id_group_ if k is not None]
-        ko_id_list = '+'.join(['ko:{}'.format(k) for k in kegg_id_group])
-        kegg_annotation_response = requests.get('http://rest.kegg.jp/get/{}'.format(ko_id_list))
-        if kegg_annotation_response.status_code == 200:
-            ko_annotations = parse_kegg_response(kegg_annotation_response.text)
-            # it can happen that some ko_ids are not found
-            # in these cases there is no entry for the ko_id
-            for kegg_id in sorted(kegg_id_group):
-                if kegg_id in ko_annotations:
-                    downloaded_kegg_annotations.add(kegg_id)
-                    session.add(
-                        Kegg_annotation(
-                            kegg_annotation_id=kegg_id,
-                            name=ko_annotations[kegg_id]['NAME'],
-                            definition=ko_annotations[kegg_id]['DEFINITION'],
-                            pathway=ko_annotations[kegg_id].get('PATHWAY', ''),
-                            module=ko_annotations[kegg_id].get('MODULE', '')))
-                    if len(downloaded_kegg_annotations) % 100 == 0:
-                        print('{} KEGG annotations downloaded in {:10.1f}s'.format(
-                            len(downloaded_kegg_annotations), time.time() - t0))
 
-                    if len(downloaded_kegg_annotations) % 1000 == 0:
-                        print('committing')
-                        session.commit()
-                else:
-                    download_failed_kegg_ids.add(kegg_id)
-                    print('  DOWNLOAD FAILED for "{}"'.format(kegg_id))
-        else:
-            print('status code {} for "{}"'.format(
-                kegg_annotation_response.status_code,
-                kegg_annotation_response.url))
-            download_failed_kegg_ids.update(kegg_id_group)
+        with session_(session_class) as session:
+
+            kegg_id_group = [k for k in kegg_id_group_ if k is not None]
+            ko_id_list = '+'.join(['ko:{}'.format(k) for k in kegg_id_group])
+            kegg_annotation_response = requests.get('http://rest.kegg.jp/get/{}'.format(ko_id_list))
+            if kegg_annotation_response.status_code == 200:
+                ko_annotations = parse_kegg_response(kegg_annotation_response.text)
+                # it can happen that some ko_ids are not found
+                # in these cases there is no entry for the ko_id
+                for kegg_id in sorted(kegg_id_group):
+                    if kegg_id in ko_annotations:
+                        downloaded_kegg_annotations.add(kegg_id)
+                        session.add(
+                            Kegg_annotation(
+                                kegg_annotation_id=kegg_id,
+                                name=ko_annotations[kegg_id]['NAME'],
+                                definition=ko_annotations[kegg_id]['DEFINITION'],
+                                pathway=ko_annotations[kegg_id].get('PATHWAY', ''),
+                                module=ko_annotations[kegg_id].get('MODULE', '')))
+                        if len(downloaded_kegg_annotations) % 100 == 0:
+                            print('{} KEGG annotations downloaded in {:10.1f}s'.format(
+                                len(downloaded_kegg_annotations), time.time() - t0))
+
+                        #if len(downloaded_kegg_annotations) % 1000 == 0:
+                        #    print('committing')
+                        #    session.commit()
+                    else:
+                        download_failed_kegg_ids.add(kegg_id)
+                        print('  DOWNLOAD FAILED for "{}"'.format(kegg_id))
+            else:
+                print('status code {} for "{}"'.format(
+                    kegg_annotation_response.status_code,
+                    kegg_annotation_response.url))
+                download_failed_kegg_ids.update(kegg_id_group)
 
     print('downloaded {} KEGG ids'.format(len(downloaded_kegg_annotations)))
-    # commit remaining kegg annotations
-    print('committing')
-    session.commit()
 
     print('downloaded and inserted {} KEGG annotations in {:5.1f}s\n'.format(
         len(downloaded_kegg_annotations), time.time()-start_time))
@@ -285,7 +301,7 @@ def load_all_samples_to_uproc_kegg_table_from_directory_tree(dir_root, session, 
 
                 t00 = time.time()
                 file_results_count = 0
-                with open(uproc_kegg_results_fp, 'rt') as uproc_kegg_results_file:
+                with open(uproc_kegg_results_fp, 'rt') as uproc_kegg_results_file, session_(session_class) as session:
 
                     # UProC results files look like this:
                     #   K01467,4208
@@ -311,9 +327,6 @@ def load_all_samples_to_uproc_kegg_table_from_directory_tree(dir_root, session, 
                 print('finished file {}: "{}" with {} results in {:5.1f}s'.format(
                     len(uproc_kegg_results_files), file_name, file_results_count, time.time()-t00))
 
-        # commit after parsing each file
-        session.commit()
-
     print('inserted {} UProC KEGG results in {:5.1f}s\n'.format(
         len(downloaded_kegg_annotations), time.time()-t0))
 
@@ -323,8 +336,8 @@ def load_all_samples_to_uproc_kegg_table_from_directory_tree(dir_root, session, 
     print('total time: {:5.1f}s'.format(time.time()-start_time))
 
 
-def load_sample_to_uproc_table_from_file(uproc_results_fp, session, engine):
-    from loaders.uproc_results.kegg.models import Kegg_annotation, Uproc_kegg_result
+def load_sample_to_uproc_table_from_file(uproc_results_fp, session_class, engine):
+    #from loaders.uproc_results.kegg.models import Kegg_annotation, Uproc_kegg_result
 
     debug = True
     if debug:
