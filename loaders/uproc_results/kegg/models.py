@@ -1,11 +1,10 @@
 import sqlalchemy as sa
-from sqlalchemy.orm import relationship
 from sqlalchemy.dialects import mysql
 
-from imicrobe_model import models
+from imicrobe_model.models import Model
 
 
-class Uproc_kegg_result(models.Model):
+class Uproc_kegg_result(Model):
     __tablename__ = 'uproc_kegg_result'
     __table_args__ = (
         sa.UniqueConstraint('kegg_annotation_id', 'sample_id'), {
@@ -24,6 +23,12 @@ class Uproc_kegg_result(models.Model):
         sa.ForeignKey('sample.sample_id', ondelete='CASCADE'),
         nullable=False)
 
+    sample_file_id = sa.Column(
+        'sample_file_id',
+        mysql.INTEGER(unsigned=True),
+        sa.ForeignKey('sample_file.sample_file_id', ondelete='CASCADE'),
+        nullable=False)
+
     kegg_annotation_id = sa.Column(
         'kegg_annotation_id',
         sa.String(16),
@@ -33,7 +38,7 @@ class Uproc_kegg_result(models.Model):
     read_count = sa.Column('read_count', sa.Integer)
 
 
-class Kegg_annotation(models.Model):
+class Kegg_annotation(Model):
     __tablename__ = 'kegg_annotation'
     __table_args__ = {
         'mysql_engine': 'InnoDB',
