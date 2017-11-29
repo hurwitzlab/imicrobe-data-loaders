@@ -26,6 +26,8 @@ from sqlalchemy.orm import sessionmaker
 
 from loaders.uproc_results.kegg.models import Kegg_annotation, Uproc_kegg_result
 
+from imicrobe_model import models
+
 
 def get_args():
     argparser = argparse.ArgumentParser()
@@ -296,8 +298,20 @@ def load_all_samples_to_uproc_kegg_table_from_directory_tree(dir_root, session_c
                 # uproc_kegg_results_fp looks like
                 #   /home/u26/jklynch/usr/local/imicrobe/data/uproc/projects/148/samples/3486/ERR906934.fasta.uproc.kegg
                 # get the sample id from the last directory name
-                _, sample_id = os.path.split(os.path.dirname(uproc_kegg_results_fp))
+
+                d, sample_id = os.path.split(root)
                 sample_id = int(sample_id)
+                _, project_id = os.path.split(os.path.dirname(d))
+                project_id = int(project_id)
+
+                # get the sample files associated with the sample
+                sample_file = session.query(
+                    models.Sample_file).filter(
+                        models.Sample_file.sample_id == sample_id,
+                        models.Sample_file.file == '/iplant/home/shared/imicrobe/projects/{}/samples/{}/{}'.format(
+                            project_id, sample_id, file_name)).one()
+
+                print(sample_file)
 
                 t00 = time.time()
                 file_results_count = 0
@@ -317,6 +331,7 @@ def load_all_samples_to_uproc_kegg_table_from_directory_tree(dir_root, session_c
                                 session.add(
                                     Uproc_kegg_result(
                                         sample_id=sample_id,
+                                        sample_file_id=sample_file.sample_file_id,
                                         kegg_annotation_id=kegg_id,
                                         read_count=int(read_count)))
                                 file_results_count += 1
@@ -340,72 +355,6 @@ def load_all_samples_to_uproc_kegg_table_from_directory_tree(dir_root, session_c
         len(download_failed_kegg_ids), '\n\t'.join(download_failed_kegg_ids)))
 
     print('total time: {:5.1f}s'.format(time.time()-start_time))
-
-
-def load_sample_to_uproc_table_from_file(uproc_results_fp, session_class, engine):
-    #from loaders.uproc_results.kegg.models import Kegg_annotation, Uproc_kegg_result
-
-    debug = True
-    if debug:
-        print('reading UProC results from "{}"'.format(uproc_results_fp))
-    t0 = time.time()
-    with open(uproc_results_fp, 'rt') as uproc_results_file:
-        line_count = 0
-        # uproc_results_fp looks like
-        #   /home/u26/jklynch/usr/local/imicrobe/data/uproc/projects/148/samples/3486/ERR906934.fasta.uproc.kegg
-        p, sample_id = os.path.split(os.path.dirname(uproc_results_fp))
-        sample_id = int(sample_id)
-
-        # UProC results files look like this:
-        #   K01467,4208
-        #   K01990,660
-        #   K07481,434
-        #   ... and so on ...
-        for line in uproc_results_file:
-            line_count += 1
-            kegg_id, read_count = line.strip().split(',')
-
-            kegg_result = session.query(
-                Kegg_annotation).filter(
-                    Kegg_annotation.kegg_annotation_id == kegg_id).one_or_none()
-
-            if kegg_result is None:
-                print('failed to find KEGG id "{}"'.format(kegg_id))
-                print('  downloading KEGG annotation')
-
-                kegg_annotation_response = requests.get('http://rest.kegg.jp/get/ko:{}'.format(kegg_id))
-                if kegg_annotation_response.status_code == 200:
-                    name, definition, pathway, module = parse_kegg_response(kegg_annotation_response.text)
-                    session.add(
-                        Kegg_annotation(
-                            kegg_annotation_id=kegg_id,
-                            name=name,
-                            definition=definition,
-                            pathway=pathway,
-                            module=module))
-                    session.commit() # errors without this
-                    session.add(
-                        Uproc_kegg_result(
-                            sample_id=int(sample_id),
-                            kegg_annotation_id=kegg_id,
-                            read_count=int(read_count)))
-                else:
-                    print('failed to get KEGG response for "{}"'.format(kegg_id))
-            else:
-                # already have annotation for kegg_id in database
-                session.add(
-                    Uproc_kegg_result(
-                        sample_id=int(sample_id),
-                        kegg_annotation_id=kegg_result.kegg_annotation_id,
-                        read_count=int(read_count)))
-
-    session.commit()
-    if debug:
-        print(
-            '  committed {} rows to "{}" table in {:5.1f}s'.format(
-                line_count,
-                Uproc_kegg_result.__tablename__,
-                time.time() - t0))
 
 
 kegg_orthology_field_re = re.compile(r'^(?P<field_name>[A-Z]+)?(\s+)(?P<field_value>.+)$')
