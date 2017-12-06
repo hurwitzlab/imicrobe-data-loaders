@@ -24,7 +24,7 @@ import requests
 import sqlalchemy as sa
 from sqlalchemy.orm import sessionmaker
 
-from loaders.uproc_results.kegg.models import Kegg_annotation, Uproc_kegg_result
+from imicrobe.uproc_results.kegg.models import Kegg_annotation, Uproc_kegg_result
 
 from imicrobe_model import models
 

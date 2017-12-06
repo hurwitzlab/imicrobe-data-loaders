@@ -17,7 +17,14 @@ by [imicrobe-python-orm](https://github.com/hurwitzlab/imicrobe-python-orm).
 See the imicrobe-python-orm  [README](https://github.com/hurwitzlab/imicrobe-python-orm) for instructions on generating the ORM classes.
 
 ### Installation
-Clone this repository to run the scripts.
+Use a virtual environment!
+
+```
+$ python3.6 -m venv ~/imdl
+$ source ~/imdl/bin/activate
+(imdl) $ pip install -r requirements.txt
+(imdl) $ write_models -o muscope_loader/models.py -u mysql+pymysql://imicrobe:<password>@localhost/imicrobe
+```
 
 ### Usage: Load UProC Pfam results
 Execute `make ils-imicrobe-projects` to create a file list of the iRODS iMicrobe project directories. By default the list will be written to the `data` directory. This step took 83 minutes on a laptop, 4 minutes on myo.

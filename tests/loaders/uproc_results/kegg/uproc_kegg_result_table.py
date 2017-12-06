@@ -3,7 +3,7 @@ import sqlite3
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-import loaders.uproc_results.kegg.models as models
+import imicrobe.uproc_results.kegg.models as models
 
 
 def test_duplicate_kegg_annotation_id():

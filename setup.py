@@ -11,7 +11,7 @@ with open(path.join(here, 'README.md'), encoding='utf-8') as f:
     long_description = f.read()
 
 setup(
-    name='imicrobe-data-loaders',
+    name='imicrobe-data-imicrobe',
 
     # Versions should comply with PEP440.  For a discussion on single-sourcing
     # the version across setup.py and the project code, see
@@ -22,7 +22,7 @@ setup(
     long_description=long_description,
 
     # The project's main homepage.
-    url='https://github.com/hurwitzlab/imicrobe-data-loaders',
+    url='https://github.com/hurwitzlab/imicrobe-data-imicrobe',
 
     # Author details
     author='Joshua Lynch',

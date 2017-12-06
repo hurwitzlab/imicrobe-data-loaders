@@ -7,7 +7,7 @@ import time
 import sqlalchemy as sa
 from sqlalchemy.orm import sessionmaker
 
-from loaders.uproc_results.uproc_models import SampleToUproc, Uproc
+from imicrobe.uproc_results.uproc_models import SampleToUproc, Uproc
 
 
 def get_args():
