@@ -3,9 +3,10 @@ loaders/uproc_results/test/*
 
 *.joblist
 
+qc_report.txt
+
 *.csv
 .DS_Store
-*.txt
 
 data/
 notebooks/
