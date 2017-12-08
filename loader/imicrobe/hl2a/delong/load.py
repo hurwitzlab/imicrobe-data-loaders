@@ -193,4 +193,3 @@ with session_manager_from_db_uri(db_uri=os.environ.get('MUSCOPE_DB_URI')) as mu_
                 else:
                     print('  - ignoring file "{}"'.format(mu_sample_file.file_))
 
-        break
