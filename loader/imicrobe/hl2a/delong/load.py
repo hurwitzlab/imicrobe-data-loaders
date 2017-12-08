@@ -28,7 +28,7 @@ from orminator import session_manager_from_db_uri
 
 
 delete_imicrobe_samples = False
-copy_files = False
+copy_files = True
 hl2a_delong_project_id = 266
 
 with session_manager_from_db_uri(db_uri=os.environ.get('MUSCOPE_DB_URI')) as mu_session:
