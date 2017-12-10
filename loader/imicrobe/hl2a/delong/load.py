@@ -19,6 +19,7 @@ to
     /iplant/home/shared/imicrobe/projects/266
 """
 import os
+import time
 
 import loader.imicrobe.models as im
 from loader.util.irods import \
@@ -211,10 +212,18 @@ with session_manager_from_db_uri(db_uri=os.environ.get('MUSCOPE_DB_URI')) as mu_
                                     im_sample_file.file_, mu_sample_file.file_))
                             else:
                                 print('copying')
-                                irods_copy(
-                                    irods_session,
-                                    src_path=mu_sample_file.file_,
-                                    dest_path=im_sample_file.file_)
+                                t0 = time.time()
+                                try:
+                                    irods_copy(
+                                        irods_session,
+                                        src_path=mu_sample_file.file_,
+                                        dest_path=im_sample_file.file_)
+                                    print('  copied file in {:5.2d}s'.format(time.time()-t0))
+                                except Exception as e:
+                                    print('  *** FAILED to copy file "{}" to "{}"'.format(
+                                        mu_sample_file.file_, im_sample_file.file_))
+                                    print('  *** after {:5.2f}s'.format(time.time()-t0))
+                                    print(e)
                     else:
                         print('*** file copy is disabled ***')
 
