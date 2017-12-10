@@ -23,7 +23,7 @@ import os
 import loader.imicrobe.models as im
 from loader.util.irods import \
     irods_copy, irods_create_collection, irods_data_object_checksums_match, \
-    irods_delete, irods_delete_collection, irods_session_manager
+    irods_data_object_exists, irods_delete, irods_delete_collection, irods_session_manager
 import muscope_loader.models as mu
 from orminator import session_manager_from_db_uri
 
