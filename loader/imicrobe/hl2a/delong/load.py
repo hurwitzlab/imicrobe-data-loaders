@@ -218,7 +218,7 @@ with session_manager_from_db_uri(db_uri=os.environ.get('MUSCOPE_DB_URI')) as mu_
                                         irods_session,
                                         src_path=mu_sample_file.file_,
                                         dest_path=im_sample_file.file_)
-                                    print('  copied file in {:5.2d}s'.format(time.time()-t0))
+                                    print('  copied file in {:5.2f}s'.format(time.time()-t0))
                                 except Exception as e:
                                     print('  *** FAILED to copy file "{}" to "{}"'.format(
                                         mu_sample_file.file_, im_sample_file.file_))
