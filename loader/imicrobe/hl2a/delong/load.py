@@ -40,8 +40,8 @@ with session_manager_from_db_uri(db_uri=os.environ.get('MUSCOPE_DB_URI')) as mu_
 
     print('found {} results'.format(len(mu_samples)))
     for i, mu_sample in enumerate(mu_samples):
-        if i > 0:
-            break
+        #if i > 0:
+        #    break
 
         with session_manager_from_db_uri(db_uri=os.environ.get('IMICROBE_DB_URI')) as im_session:
             print('\n{}'.format(mu_sample.sample_name))
