@@ -61,7 +61,7 @@ with session_manager_from_db_uri(db_uri=os.environ.get('MUSCOPE_DB_URI')) as mu_
                     im_session.flush()
                     im_sample = None
                 else:
-                    print('  no change to sample "{}"'.format(im_sample.sample_name))
+                    pass
 
             if im_sample is None:
                 print('creating sample "{}" in imicrobe database'.format(mu_sample.sample_name))
@@ -147,10 +147,10 @@ with session_manager_from_db_uri(db_uri=os.environ.get('MUSCOPE_DB_URI')) as mu_
                         sample_collection_path, sample_id = os.path.split(sample_id_collection_path)
                         if im_sample.sample_id == int(sample_id):
                             # this sample file is in the expected collection
-                            print('  found sample file "{}" in the expected collection "{}"'.format(
+                            print('    found sample file "{}" in the expected collection "{}"'.format(
                                 file_name, sample_collection_path))
                         else:
-                            print('  found sample file "{}" in the wrong collection "{}"'.format(
+                            print('    found sample file "{}" in the wrong collection "{}"'.format(
                                 file_name, sample_collection_path))
                             print('    deleting "{}"'.format(im_existing_sample_file.file_))
                             irods_delete(irods_session, im_existing_sample_file.file_)
@@ -161,7 +161,7 @@ with session_manager_from_db_uri(db_uri=os.environ.get('MUSCOPE_DB_URI')) as mu_
                         print('    deleting collection "{}"'.format(irods_collection))
                         irods_delete_collection(irods_session, irods_collection)
 
-            # copy files if they have not been copied already
+            # copy files if they have not been copied previously
             im_sample_file_type_reads = im_session.query(im.Sample_file_type).filter(
                 im.Sample_file_type.type_ == 'Reads').one()
             for mu_sample_file in mu_sample.sample_file_list:
