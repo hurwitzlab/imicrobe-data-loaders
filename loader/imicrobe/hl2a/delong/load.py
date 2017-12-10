@@ -148,13 +148,13 @@ with session_manager_from_db_uri(db_uri=os.environ.get('MUSCOPE_DB_URI')) as mu_
                         if im_sample.sample_id == int(sample_id):
                             # this sample file is in the expected collection
                             print('    found sample file "{}" in the expected collection "{}"'.format(
-                                file_name, sample_collection_path))
+                                file_name, sample_id_collection_path))
                         else:
                             print('    found sample file "{}" in the wrong collection "{}"'.format(
-                                file_name, sample_collection_path))
+                                file_name, sample_id_collection_path))
                             print('    deleting "{}"'.format(im_existing_sample_file.file_))
                             irods_delete(irods_session, im_existing_sample_file.file_)
-                            irods_delete_collection_set.add(sample_collection_path)
+                            irods_delete_collection_set.add(sample_id_collection_path)
 
                     # irods_collection will be empty if no files were deleted
                     for irods_collection in irods_delete_collection_set:
