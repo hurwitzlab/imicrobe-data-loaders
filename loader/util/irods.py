@@ -36,6 +36,14 @@ def irods_create_collection(irods_session, target_collection_path):
         irods_session.collections.create(collection_path)
 
 
+def irods_data_object_checksums_match(irods_session, path_1, path_2):
+    data_object_1 = irods_session.data_objects.get(path_1)
+    data_object_2 = irods_session.data_objects.get(path_2)
+    print('data object "{}" has checksum {}'.format(path_1, data_object_1.checksum))
+    print('data object "{}" has checksum {}'.format(path_2, data_object_2.checksum))
+    return data_object_1.checksum == data_object_2.checksum
+
+
 def irods_copy(irods_session, src_path, dest_path):
     irods_session.data_objects.copy(src_path=src_path, dest_path=dest_path, **{FORCE_FLAG_KW: True})
 

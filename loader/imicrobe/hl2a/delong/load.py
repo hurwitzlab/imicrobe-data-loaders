@@ -22,7 +22,8 @@ import os
 
 import loader.imicrobe.models as im
 from loader.util.irods import \
-    irods_copy, irods_create_collection, irods_delete, irods_delete_collection, irods_session_manager
+    irods_copy, irods_create_collection, irods_data_object_checksums_match, \
+    irods_delete, irods_delete_collection, irods_session_manager
 import muscope_loader.models as mu
 from orminator import session_manager_from_db_uri
 
@@ -123,25 +124,41 @@ with session_manager_from_db_uri(db_uri=os.environ.get('MUSCOPE_DB_URI')) as mu_
                         im_sample_attr.attr_value = mu_sample_attr.value
 
             # copy sample files from muscope to imicrobe
-            irods_delete_collection_set = set()
-            im_existing_sample_files = im_session.query(im.Sample_file).filter(
-                im.Sample_file.sample_id == im_sample_id).all()
-            if len(im_existing_sample_files) > 0:
-                print('  removing sample files from irods')
-                with irods_session_manager() as irods_session:
-                    for im_existing_sample_file in im_existing_sample_files:
-                        print('    deleting "{}"'.format(im_existing_sample_file.file_))
-                        irods_delete(irods_session, im_existing_sample_file.file_)
 
-                        parent, child = os.path.split(im_existing_sample_file.file_)
-                        irods_delete_collection_set.add(parent)
+            # if there are already sample files in /iplant/share/imicrobe associated
+            # with this sample then check they have the expected sample_id
+            # if not then delete the sample file(s)
+            if len(im_sample.sample_file_list) == 0:
+                print('  imicrobe sample "{}" has no associated sample files yet'.format(im_sample.sample_name))
+            else:
+                print('  {} sample files are associated with imicrobe sample "{}"'.format(
+                    len(im_sample.sample_file_list), im_sample.sample_name))
+                with irods_session_manager() as irods_session:
+                    # sample files are in collections such as this:
+                    # /iplant/shared/imicrobe/projects/266/samples/5307
+                    # it is possible that the sample id for an existing file does not match
+                    # the sample_id we have currently so check that now
+                    irods_delete_collection_set = set()
+                    for im_existing_sample_file in im_sample.sample_file_list:
+                        sample_id_collection_path, file_name = os.path.split(im_existing_sample_file.file_)
+                        sample_collection_path, sample_id = os.path.split(sample_id_collection_path)
+                        if im_sample.sample_id == int(sample_id):
+                            # this sample file is in the expected collection
+                            print('  found sample file "{}" in the expected collection "{}"'.format(
+                                file_name, sample_collection_path))
+                        else:
+                            print('  found sample file "{}" in the wrong collection "{}"'.format(
+                                file_name, sample_collection_path))
+                            print('    deleting "{}"'.format(im_existing_sample_file.file_))
+                            irods_delete(irods_session, im_existing_sample_file.file_)
+                            irods_delete_collection_set.add(sample_collection_path)
+
+                    # irods_collection will be empty if no files were deleted
                     for irods_collection in irods_delete_collection_set:
                         print('    deleting collection "{}"'.format(irods_collection))
                         irods_delete_collection(irods_session, irods_collection)
-            else:
-                pass
 
-            # copy files
+            # copy files if they have not been copied already
             im_sample_file_type_reads = im_session.query(im.Sample_file_type).filter(
                 im.Sample_file_type.type_ == 'Reads').one()
             for mu_sample_file in mu_sample.sample_file_list:
@@ -162,6 +179,7 @@ with session_manager_from_db_uri(db_uri=os.environ.get('MUSCOPE_DB_URI')) as mu_
                     print('searching for imicrobe sample file with basename "{}"'.format(mu_sample_file_basename))
                     im_sample_file = im_session.query(im.Sample_file).filter(
                         im.Sample_file.sample == im_sample).filter(
+                        im.Sample_file.sample_file_type == im_sample_file_type_reads).filter(
                         im.Sample_file.file_.like('%{}'.format(mu_sample_file_basename))).one_or_none()
 
                     if im_sample_file is None:
@@ -170,6 +188,7 @@ with session_manager_from_db_uri(db_uri=os.environ.get('MUSCOPE_DB_URI')) as mu_
                         im_sample_file = im.Sample_file(file_=im_sample_file_path)
                         im_sample_file.sample = im_sample
                         im_sample_file.sample_file_type = im_sample_file_type_reads
+
                     else:
                         print('  imicrobe sample file "{}" already exists'.format(im_sample_file_path))
 
@@ -182,11 +201,16 @@ with session_manager_from_db_uri(db_uri=os.environ.get('MUSCOPE_DB_URI')) as mu_
                             irods_create_collection(
                                 irods_session,
                                 target_collection_path=im_sample_collection_path)
-                            print('copying')
-                            irods_copy(
-                                irods_session,
-                                src_path=mu_sample_file.file_,
-                                dest_path=im_sample_file.file_)
+
+                            if irods_data_object_checksums_match(irods_session, mu_sample_file.file_, im_sample_file.file_):
+                                print('  imicrobe sample file "{}" matches muscope sample file "{}"'.format(
+                                    im_sample_file.file_, mu_sample_file.file_))
+                            else:
+                                print('copying')
+                                irods_copy(
+                                    irods_session,
+                                    src_path=mu_sample_file.file_,
+                                    dest_path=im_sample_file.file_)
                     else:
                         print('*** file copy is disabled ***')
 
