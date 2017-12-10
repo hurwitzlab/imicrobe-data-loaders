@@ -205,7 +205,8 @@ with session_manager_from_db_uri(db_uri=os.environ.get('MUSCOPE_DB_URI')) as mu_
                                 irods_session,
                                 target_collection_path=im_sample_collection_path)
 
-                            if irods_data_object_checksums_match(irods_session, mu_sample_file.file_, im_sample_file.file_):
+                            if irods_data_object_exists(irods_session, im_sample_file) and \
+                                    irods_data_object_checksums_match(irods_session, mu_sample_file.file_, im_sample_file.file_):
                                 print('  imicrobe sample file "{}" matches muscope sample file "{}"'.format(
                                     im_sample_file.file_, mu_sample_file.file_))
                             else:
