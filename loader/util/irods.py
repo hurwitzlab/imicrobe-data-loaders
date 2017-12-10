@@ -2,7 +2,7 @@ import os
 
 from irods.keywords import FORCE_FLAG_KW
 from irods.session import iRODSSession
-from irods.exception import CAT_NO_ROWS_FOUND, CollectionDoesNotExist
+from irods.exception import CAT_NO_ROWS_FOUND, CollectionDoesNotExist, DataObjectDoesNotExist
 
 
 def irods_session_manager():
@@ -46,6 +46,14 @@ def irods_data_object_checksums_match(irods_session, path_1, path_2):
 
 def irods_copy(irods_session, src_path, dest_path):
     irods_session.data_objects.copy(src_path=src_path, dest_path=dest_path, **{FORCE_FLAG_KW: True})
+
+
+def irods_data_object_exists(irods_session, target_path):
+    try:
+        irods_session.data_objects.get(target_path)
+        return True
+    except DataObjectDoesNotExist:
+        return False
 
 
 def irods_delete(irods_session, target_path):
