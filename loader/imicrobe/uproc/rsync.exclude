@@ -1,0 +1,14 @@
+.cache
+.DS_Store
+.idea
+.git
+.gitignore
+*.img*
+*.pyc
+__pycache__
+
+.ipynb_checkpoints/
+
+notebooks/
+data/download-command-file.txt
+data/uproc_results.txt.gz
