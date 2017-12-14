@@ -1,3 +1,5 @@
+venv/
+
 models.py
 loaders/uproc_results/test/*
 
