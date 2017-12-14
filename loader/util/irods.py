@@ -9,6 +9,14 @@ def irods_session_manager():
     return iRODSSession(irods_env_file=os.path.expanduser('~/.irods/irods_environment.json'))
 
 
+def irods_collection_exists(irods_session, collection_path):
+    try:
+        irods_session.collections.get(collection_path)
+        return True
+    except CollectionDoesNotExist:
+        return False
+
+
 def irods_create_collection(irods_session, target_collection_path):
     """Create the specified collection and all parent collections
     that do not exist.
@@ -68,3 +76,10 @@ def irods_delete_collection(irods_session, target_collection_path):
         irods_session.collections.remove(target_collection_path)
     except CAT_NO_ROWS_FOUND:
         print('unable to delete collection "{}" because it does not exist'.format(target_collection_path))
+
+
+def walk(walk_root):
+    with irods_session_manager() as irods_session:
+        collection_stack = [walk_root]
+        while len(collection_stack) > 0:
+            current_collection = collection_stack.pop(0)
