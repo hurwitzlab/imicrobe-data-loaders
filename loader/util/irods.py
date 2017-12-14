@@ -56,6 +56,10 @@ def irods_copy(irods_session, src_path, dest_path):
     irods_session.data_objects.copy(src_path=src_path, dest_path=dest_path, **{FORCE_FLAG_KW: True})
 
 
+def irods_put(irods_session, src_path, dest_path):
+    irods_session.data_objects.put(src_path, dest_path)
+
+
 def irods_data_object_exists(irods_session, target_path):
     try:
         irods_session.data_objects.get(target_path)
