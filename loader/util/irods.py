@@ -83,7 +83,15 @@ def irods_delete_collection(irods_session, target_collection_path):
 
 
 def walk(walk_root):
+    print('walk root is "{}"'.format(walk_root))
     with irods_session_manager() as irods_session:
-        collection_stack = [walk_root]
+        collection_stack = list()
+        p = irods_session.collections.get(walk_root)
+        collection_stack.append(p)
         while len(collection_stack) > 0:
-            current_collection = collection_stack.pop(0)
+            parent_collection = collection_stack.pop(0)
+            yield parent_collection, parent_collection.subcollections, parent_collection.data_objects
+            for s in parent_collection.subcollections:
+                collection_stack.insert(0, s)
+            # keep the stack in sorted order for reproducible behavior
+            collection_stack.sort(key=lambda c: c.path)
