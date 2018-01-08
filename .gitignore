@@ -1,5 +1,7 @@
 venv/
 
+pfamA.txt.gz
+
 models.py
 loaders/uproc_results/test/*
 
