@@ -1,6 +1,8 @@
 """
 First task:
-on Stampede2 copy UProC output files from TACC to IRODS
+on Stampede2 copy UProC output files from TACC to IRODS.
+It took about 900s on Stampede2 to check that all ~8900 files were
+already present in /iplant/home/shared/imicrobe/projects
 
 Second task:
 on myo read UProC files from IRODS and load imicrobe database
@@ -97,7 +99,7 @@ def copy_file_to_irods(source_fp, target_fp):
             irods.irods_put(irods_session, source_fp, target_fp)
 
 
-def cli(argv):
+def main(argv):
     arg_parser = argparse.ArgumentParser()
     arg_parser.add_argument('--source-root')
     arg_parser.add_argument('--target-root')
@@ -111,5 +113,9 @@ def cli(argv):
         file_limit=args.file_limit)
 
 
+def cli():
+    main(sys.argv[1:])
+
+
 if __name__ == '__main__':
-    cli(sys.argv[1:])
+    cli()
