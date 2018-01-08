@@ -66,6 +66,7 @@ setup(
     install_requires=[
         'orminator',
         'python-irodsclient',
+        'pandas',
         'sqlalchemy',
         'requests'
     ],
