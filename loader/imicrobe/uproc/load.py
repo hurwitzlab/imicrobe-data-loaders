@@ -16,13 +16,13 @@ from orminator import session_manager_from_db_uri
 
 import loader.imicrobe.uproc.tables as uproc_tables
 from loader.util import grouper
-from loader.util.irods import walk
+from loader.util.irods import get_project_sample_collection_paths, irods_session_manager
 from loader.util.kegg import get_kegg_annotations
 
 
 def main():
     drop_tables()
-    #drop_annotation_tables()
+    drop_annotation_tables()
     create_tables()
     load_protein_type_table()
     load_protein_evidence_type_table()
@@ -135,59 +135,91 @@ def load_annotations():
 
     uproc_results_service.insert_pfam_annotations_from_file(pfamA_fp='pfamA.txt.gz')
 
-    uproc_results_limit = 1
+    uproc_results_limit = 10000
     uproc_results_count = 0
     imicrobe_project_root = '/iplant/home/shared/imicrobe/projects'
-    for parent_collection, child_collections, data_objects in walk(walk_root=imicrobe_project_root):
-        print('parent collection: "{}"'.format(parent_collection.path))
-        # put all parsed data frames for this sample into a list
-        # in most cases there will be only one data frame
-        sample_uproc_results_df_list = []
-        for data_object in data_objects:
-            print('\t' + data_object.name)
-            m = uproc_results_file_name_re.search(data_object.name)
-            if m is not None:
-            #if data_object.name.endswith('.uproc.kegg'):
-                # it can happen that a sample has more than one sample file
-                # there will be one UProC result file for each sample file
-                # all UProC results for a single sample must be combined
-                print(data_object.path)
-                uproc_results_df = parse_uproc_results(data_object)
-                sample_uproc_results_df_list.append(uproc_results_df)
-                print(uproc_results_df.head())
-            else:
+    project_to_sample_collection_paths = get_project_sample_collection_paths(
+        collection_root=imicrobe_project_root)
+
+    sample_count = sum([len(s) for p, s in project_to_sample_collection_paths.items()])
+    sample_index = 0
+    for project_collection_path, sample_collection_paths in project_to_sample_collection_paths.items():
+        print('project collection: "{}"'.format(project_collection_path))
+
+        with irods_session_manager() as irods_session:
+            for sample_collection_path in sample_collection_paths:
+                sample_index += 1
+                print('inserting results for sample {} of {}'.format(sample_index, sample_count))
+                sample_collection = irods_session.collections.get(sample_collection_path)
+                sample_data_objects = sample_collection.data_objects
+
+                # put all parsed data frames for this sample into a list
+                # in most cases there will be only one data frame
+                sample_uproc_results_data_object_list = []
+                for data_object in sample_data_objects:
+                    #print('\t' + data_object.name)
+                    m = uproc_results_file_name_re.search(data_object.name)
+                    if m is None:
+                        pass
+                    elif data_object.size == 0:
+                        print('{} is empty'.format(data_object.path))
+                    else:
+                        # it can happen that a sample has more than one sample file
+                        # there will be one UProC result file for each sample file
+                        # all UProC results for a single sample must be combined
+                        #print(data_object.path)
+                        sample_uproc_results_data_object_list.append(data_object)
+
+                if len(sample_uproc_results_data_object_list) == 0:
+                    print('  found no UProC results in\n\t{}'.format(sample_collection_path))
+                elif uproc_results_service.count_uproc_results_for_sample(sample_id=sample_collection.name) > 0:
+                    # assume all data for this sample has been inserted
+                    print('* results for sample {} have been loaded'.format(sample_collection.name))
+                else:
+                    print('  reading UProC results for sample {}\n\t{}'.format(
+                        sample_collection.name,
+                        '\n\t'.join([s.name for s in sample_uproc_results_data_object_list])))
+                    sample_uproc_results_df_list = []
+                    for sample_uproc_results_data_object in sample_uproc_results_data_object_list:
+                        uproc_results_df = parse_uproc_results(sample_uproc_results_data_object)
+                        sample_uproc_results_df_list.append(uproc_results_df)
+                        #print(uproc_results_df.head())
+
+                    # combine the dataframes and insert the UProC results values
+                    if len(sample_uproc_results_df_list) == 0:
+                        pass
+                    else:
+                        combined_df = sample_uproc_results_df_list[0]
+                        for df in sample_uproc_results_df_list[1:]:
+                            combined_df = combined_df.add(df, fill_value=0.0)
+
+                        combined_df.sort_values(by='read_count', inplace=True, ascending=False)
+                        print('  combined data {}:\n{}'.format(combined_df.shape, combined_df.head()))
+                        t0 = time.time()
+
+                        uproc_results_service.insert_kegg_annotations_for_sample(
+                            annotation_results_df=combined_df[
+                                [accession.startswith('K') for accession in combined_df.index]])
+
+                        uproc_results_service.insert_uproc_results_for_sample(
+                            sample_id=sample_collection.name,
+                            uproc_results_df=combined_df)
+
+                        insertion_count = uproc_results_service.count_uproc_results_for_sample(
+                            sample_id=sample_collection.name)
+
+                        print('  inserted {} annotations for sample in {:5.2f}s'.format(
+                            insertion_count, time.time()-t0))
+                        # count samples rather than files to decide if we should stop early
+                        uproc_results_count += 1
+
+            if uproc_results_limit <= 0:
+                # there is no limit
                 pass
-
-        # combine the dataframes and insert the UProC results values
-        if len(sample_uproc_results_df_list) == 0:
-            pass
-        else:
-            combined_df = sample_uproc_results_df_list[0]
-            for df in sample_uproc_results_df_list[1:]:
-                combined_df = combined_df.add(df, fill_value=0.0)
-
-            combined_df.sort_values(by='read_count', inplace=True, ascending=False)
-            # parent_collection.path looks like /iplant/home/shared/imicrobe/projects/1/samples/2
-            # so parent_collection.name is the sample id '2'
-            print('combined data:\n{}'.format(combined_df.head()))
-            t0 = time.time()
-
-            uproc_results_service.insert_kegg_annotations_for_sample(
-                annotation_results_df=combined_df[
-                    [accession.startswith('K') for accession in combined_df.index]])
-
-            uproc_results_service.insert_uproc_results_for_sample(
-                sample_id=parent_collection.name,
-                uproc_results_df=combined_df)
-
-            insertion_count = uproc_results_service.count_uproc_results_for_sample(
-                sample_id=parent_collection.name)
-
-            print('inserted {} annotations for sample in {:5.2f}s'.format(
-                insertion_count, time.time()-t0))
-            # count samples rather than files to decide if we should stop early
-            uproc_results_count += 1
-            if uproc_results_count >= uproc_results_limit:
+            elif uproc_results_limit < uproc_results_count:
+                # there is a limit and it has not been met
+                pass
+            else:
                 print('UProC result limit {} has been met'.format(uproc_results_limit))
                 break
 
@@ -302,31 +334,21 @@ class UProCResultsService:
 
                     self.annotation_db_ids[accession] = new_protein_annotation.protein_id
 
-        print('loaded {} annotations in {:5.2f}s'.format(annotation_results_df.shape[0], time.time()-t0))
+        print('downloaded {} annotations in {:5.2f}s'.format(len(kegg_annotations), time.time()-t0))
 
 
     def insert_pfam_annotations_from_file(self, pfamA_fp):
         with session_manager_from_db_uri(db_uri=os.environ['IMICROBE_DB_URI']) as imicrobe_db_session:
             t0 = time.time()
 
-            #missing_accession_list = itertools.filterfalse(
-            #    lambda kegg_id:
-            #        kegg_id in self.annotation_db_ids or kegg_id in self.bad_accessions,
-            #    annotation_results_df.index)
-
-            #kegg_annotations, bad_kegg_ids = get_kegg_annotations(missing_accession_list)
-
-            #if len(bad_kegg_ids) > 0:
-            #    print('** bad KEGG ids: {}'.format(bad_kegg_ids))
-            #    self.bad_accessions.update(bad_kegg_ids)
-            #    print('bad_accessions has {} element(s)'.format(len(self.bad_accessions)))
-
             debug = False
             line_group_length = 2000
+            insert_count = 0
+            print('checking for PFam annotations missing from database')
             with gzip.open(pfamA_fp, 'rt', encoding='latin-1', errors='replace') as pfamA_file:
-                for line_group in grouper(pfamA_file.readlines(), line_group_length, fillvalue=None):
+                for line_group in grouper(pfamA_file, line_group_length, fillvalue=None):
                     line_counter = 0
-                    t0 = time.time()
+                    t00 = time.time()
                     for line in (line_ for line_ in line_group if line_ is not None):
                         line_counter += 1
                         pfam_acc, pfam_identifier, pfam_aliases, pfam_name, _, _, _, _, description, *_ = line.strip().split('\t')
@@ -338,9 +360,11 @@ class UProCResultsService:
                             print('pfam name       : {}'.format(pfam_name))
                             print('description     : {}'.format(description))
 
-                        if imicrobe_db_session.query(uproc_tables.Protein).filter(
-                                uproc_tables.Protein.accession == pfam_acc).one_or_none() is not None:
-                            pass
+
+                        protein_id_results = imicrobe_db_session.query(uproc_tables.Protein.protein_id).filter(
+                                uproc_tables.Protein.accession == pfam_acc).one_or_none()
+                        if protein_id_results is not None:
+                            protein_id = protein_id_results[0]
                             # print('{} is already in the database'.format(pfam_acc))
                         else:
                             # insert
@@ -352,11 +376,17 @@ class UProCResultsService:
                                     uproc_tables.Protein_type.type_ == self.get_protein_type(pfam_acc)).one()[0]
                             )
                             imicrobe_db_session.add(new_protein)
+                            insert_count += 1
                             imicrobe_db_session.flush()
-                            self.annotation_db_ids[pfam_acc] = new_protein.protein_id
+                            protein_id = new_protein.protein_id
+
+                        self.annotation_db_ids[pfam_acc] = protein_id
 
                     imicrobe_db_session.commit()
-                    print('committed {} rows in {:5.1f}s'.format(line_counter, time.time() - t0))
+                    print('committed {} rows in {:5.1f}s ({:5.1f}s)'.format(
+                        insert_count,
+                        time.time() - t0,
+                        time.time() - t00))
 
                 print('table "{}" has {} PFAM rows'.format(
                     uproc_tables.Protein.__tablename__,
