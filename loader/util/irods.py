@@ -95,3 +95,46 @@ def walk(walk_root):
                 collection_stack.insert(0, s)
             # keep the stack in sorted order for reproducible behavior
             collection_stack.sort(key=lambda c: c.path)
+
+
+def get_project_sample_collection_paths(collection_root='/iplant/home/shared/imicrobe/projects'):
+    """Return a dictionary of project paths to lists of sample paths.
+
+    This function is intended to be used to get a complete listing of sample collection paths.
+    Walking the collections looking for specific files takes a lot of time so this is an attempt
+    at a faster solution.
+
+    The original application for this function was finding UProC results files.
+
+    :param collection_root: the top of the collection tree to be searched
+    :return: dictionary
+    """
+    project_to_sample_collections = dict()
+
+    with irods_session_manager() as irods_session:
+        # from the top
+        project_collections = irods_session.collections.get(collection_root).subcollections
+        for project_collection in project_collections:
+            samples_collection_path = os.path.join(project_collection.path, 'samples')
+            try:
+                sample_collections_for_project = irods_session.collections.get(samples_collection_path).subcollections
+                print('{} sample collection(s) for project {}'.format(
+                    len(sample_collections_for_project),
+                    project_collection.name))
+                # '\n\t'.join([s.name for s in sample_collections_for_project])))
+            except CollectionDoesNotExist:
+                print('collection "{}" does not exist'.format(samples_collection_path))
+                sample_collections_for_project = []
+            project_to_sample_collections[project_collection.path] = [s.path for s in sample_collections_for_project]
+
+        #projects_with_no_sample_collections = [
+        #    p
+        #    for p, s
+        #    in project_to_sample_collections.items()
+        #    if len(s) == 0]
+        #print('{} projects with no sample collections:\n\t{}'.format(
+        #    len(projects_with_no_sample_collections),
+        #    '\n\t'.join(projects_with_no_sample_collections)))
+
+    return project_to_sample_collections
+
