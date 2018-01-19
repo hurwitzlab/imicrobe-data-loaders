@@ -68,7 +68,8 @@ setup(
         'python-irodsclient',
         'pandas',
         'sqlalchemy',
-        'requests'
+        'requests',
+        'requests_cache'
     ],
 
     # List additional groups of dependencies here (e.g. development
