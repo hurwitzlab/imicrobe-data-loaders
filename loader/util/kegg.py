@@ -4,8 +4,12 @@ import time
 from collections import defaultdict
 
 import requests
+import requests_cache
 
 from loader.util import grouper
+
+
+requests_cache.install_cache('kegg_api_cache')
 
 
 def get_kegg_annotations(kegg_ids):
@@ -17,10 +21,10 @@ def get_kegg_annotations(kegg_ids):
     for group_of_10 in grouper(sorted(kegg_ids), n=10):
         t0 = time.time()
         kegg_id_list = [k for k in group_of_10 if k is not None]
-        print(kegg_id_list)
+        #print(kegg_id_list)
         print('requesting {} KEGG annotation(s)'.format(len(kegg_id_list)))
         kegg_annotations, bad_kegg_ids = get_10_kegg_annotations(kegg_id_list)
-        print('received {} KEGG annotations in {:5.2f}s'.format(len(kegg_annotations), time.time()-t0))
+        print('    received {} in {:5.2f}s'.format(len(kegg_annotations), time.time()-t0))
         all_kegg_annotations.update(kegg_annotations)
         all_bad_kegg_ids.update(bad_kegg_ids)
 
@@ -87,7 +91,12 @@ def get_10_kegg_annotations(kegg_ids):
 
     ko_id_list = '+'.join(['ko:{}'.format(k) for k in kegg_ids])
     response = requests.get('http://rest.kegg.jp/get/{}'.format(ko_id_list))
-    if response.status_code is not 200:
+    if response.status_code == 404:
+        print('no annotations returned')
+        all_entries = {}
+        bad_kegg_ids = set(kegg_ids)
+        return all_entries, bad_kegg_ids
+    if response.status_code != 200:
         error_msg = 'ERROR: response to "{}" is {}'.format(response.url, response.status_code)
         print(error_msg)
         raise Exception(error_msg)
