@@ -1,5 +1,7 @@
 import os
 
+from loader.util import take
+
 from irods.keywords import FORCE_FLAG_KW
 from irods.session import iRODSSession
 from irods.exception import CAT_NO_ROWS_FOUND, CollectionDoesNotExist, DataObjectDoesNotExist
@@ -97,7 +99,9 @@ def walk(walk_root):
             collection_stack.sort(key=lambda c: c.path)
 
 
-def get_project_sample_collection_paths(collection_root='/iplant/home/shared/imicrobe/projects'):
+def get_project_sample_collection_paths(
+        collection_root='/iplant/home/shared/imicrobe/projects',
+        sample_limit=None):
     """Return a dictionary of project paths to lists of sample paths.
 
     This function is intended to be used to get a complete listing of sample collection paths.
@@ -107,8 +111,15 @@ def get_project_sample_collection_paths(collection_root='/iplant/home/shared/imi
     The original application for this function was finding UProC results files.
 
     :param collection_root: the top of the collection tree to be searched
-    :return: dictionary
+    :param sample_limit: maximum number of samples to return
+    :return: dictionary such as
+        {
+            '/project/alice/': ['/project/alice/samples/abe', '/project/alice/samples/aoife', ...],
+            '/project/bob/': ['/projects/bob/samples/betsy', '/projects/bob/samples/ben', ...],
+            ...
+        }
     """
+    sample_total = 0
     project_to_sample_collections = dict()
 
     with irods_session_manager() as irods_session:
@@ -125,16 +136,23 @@ def get_project_sample_collection_paths(collection_root='/iplant/home/shared/imi
             except CollectionDoesNotExist:
                 print('collection "{}" does not exist'.format(samples_collection_path))
                 sample_collections_for_project = []
-            project_to_sample_collections[project_collection.path] = [s.path for s in sample_collections_for_project]
 
-        #projects_with_no_sample_collections = [
-        #    p
-        #    for p, s
-        #    in project_to_sample_collections.items()
-        #    if len(s) == 0]
-        #print('{} projects with no sample collections:\n\t{}'.format(
-        #    len(projects_with_no_sample_collections),
-        #    '\n\t'.join(projects_with_no_sample_collections)))
+            if sample_limit is None:
+                sample_path_list = [
+                    s.path for s
+                    in sample_collections_for_project]
+            else:
+                sample_path_list = [
+                    s.path for s
+                    in take((sample_limit - sample_total), sample_collections_for_project)]
+
+            sample_total += len(sample_path_list)
+            project_to_sample_collections[project_collection.path] = sample_path_list
+
+            if sample_limit is not None and sample_limit <= sample_total:
+                print('sample limit {} has been reached'.format(sample_limit))
+                break
+            else:
+                pass
 
     return project_to_sample_collections
-
