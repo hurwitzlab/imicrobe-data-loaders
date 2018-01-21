@@ -144,6 +144,7 @@ create table protein_evidence (
     foreign key (protein_evidence_type_id) references protein_evidence_type (protein_evidence_type_id)
 ) ENGINE=InnoDB DEFAULT CHARSET='utf8';
 """
+"""
 class Protein_evidence(models.Model):
     __tablename__ = 'protein_evidence'
     __table_args__ = {
@@ -169,3 +170,4 @@ class Protein_evidence(models.Model):
         nullable=False)
 
     sa.UniqueConstraint('sample_to_protein_id', 'protein_evidence_type_id')
+"""
