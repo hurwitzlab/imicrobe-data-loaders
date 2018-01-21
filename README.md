@@ -11,6 +11,44 @@ Load CAMERA metadata.
 ## loader/imicrobe/uproc
 Scripts to load UProC results into the iMicrobe database.
 
+Run copy_uproc_results_to_iplant_imicrobe.py on Stampede2.
+
+Run load.py on myo.
+
+### Requirements
+These scripts require a Python 3.6+ interpreter, `make`, and iRODS iCommands.
+
+### Installation and Usage
+
+#### Stampede2
+
+```
+$ module load python3
+$ python3 -m venv ~/imdl
+$ source ~/imdl/bin/activate
+(imdl) $ git clone https://github.com/hurwitzlab/imicrobe-data-loaders.git
+(imdl) $ cd imicrobe-data-loaders
+(imdl) $ pip install -r requirements.txt
+(imdl) $ make copy-uproc-results-to-irods
+```
+
+#### Myo
+
+Use a virtual environment for greatest happiness. All Python requirements will
+be installed automatically.
+
+```
+$ python3.6 -m venv ~/imdl
+$ source ~/imdl/bin/activate
+(imdl) $ git clone https://github.com/hurwitzlab/imicrobe-data-loaders.git
+(imdl) $ cd imicrobe-data-loaders
+(imdl) $ pip install -r requirements.txt
+(imdl) $ write_models -o loader/imicrobe/models.py -u mysql+pymysql://imicrobe:<password>@localhost/imicrobe
+##(imdl) $ write_models -o loader/muscope/models.py -u mysql+pymysql://imicrobe:<password>@localhost/muscope2
+(imdl) $ make load-all-tables
+```
+
+
 
 ## imicrobe-load-uproc-results
 REPLACED BY loader/imicrobe/uproc
