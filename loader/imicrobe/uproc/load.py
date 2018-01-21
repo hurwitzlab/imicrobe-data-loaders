@@ -1,11 +1,13 @@
 """
 Read UProC results files from an IRODS collections and load the imicrobe database.
 """
+import argparse
 import gzip
 import itertools
 import os
 import re
 import subprocess
+import sys
 import time
 
 import pandas as pd
@@ -20,20 +22,60 @@ from loader.util.irods import get_project_sample_collection_paths, irods_session
 from loader.util.kegg import get_kegg_annotations
 
 
-def main():
-    drop_tables()
-    drop_annotation_tables()
-    create_tables()
-    load_protein_type_table()
-    load_protein_evidence_type_table()
+def get_args(argv):
+    arg_parser = argparse.ArgumentParser()
+
+    arg_parser.add_argument(
+        '-u', '--db-uri',
+        required=True,
+        help='SQLAlchemy database URI')
+
+    arg_parser.add_argument(
+        '--drop-results-tables',
+        required=False,
+        action='store_true',
+        default=False,
+        help='Drop UProC results tables')
+
+    arg_parser.add_argument(
+        '--drop-annotation-tables',
+        required=False,
+        action='store_true',
+        default=False,
+        help='Drop KEGG and PFam tables (must drop results tables as well)')
+
+    arg_parser.add_argument(
+        '-l', '--sample-limit',
+        required=False,
+        type=int,
+        default=None,
+        help='Stop after --sample-limit samples have been processed'
+    )
+
+    args = arg_parser.parse_args(args=argv)
+
+    return args
+
+
+def main(argv):
+    args = get_args(argv)
+    print(args)
+
+    if args.drop_results_tables:
+         drop_results_tables(args.db_uri)
+    if args.drop_annotation_tables:
+        drop_annotation_tables(args.db_uri)
+    create_tables(args.db_uri)
+    load_protein_type_table(args.db_uri)
+    load_protein_evidence_type_table(args.db_uri)
 
     download_pfam_file()
 
-    load_annotations()
+    load_annotations(args.db_uri, args.sample_limit)
 
 
-def create_tables():
-    engine = sqlalchemy.create_engine(os.environ['IMICROBE_DB_URI'], echo=False)
+def create_tables(db_uri):
+    engine = sqlalchemy.create_engine(db_uri, echo=False)
 
     uproc_tables.Protein_type.__table__.create(bind=engine, checkfirst=True)
     uproc_tables.Protein.__table__.create(bind=engine, checkfirst=True)
@@ -41,54 +83,28 @@ def create_tables():
     uproc_tables.Sample_to_protein.__table__.create(bind=engine, checkfirst=True)
 
     # is this table needed?
-    uproc_tables.Protein_evidence.__table__.create(bind=engine, checkfirst=True)
+    #uproc_tables.Protein_evidence.__table__.create(bind=engine, checkfirst=True)
 
 
-def drop_annotation_tables():
-    engine = sqlalchemy.create_engine(os.environ['IMICROBE_DB_URI'], echo=False)
+def drop_annotation_tables(db_uri):
+    engine = sqlalchemy.create_engine(db_uri, echo=False)
 
-    drop(engine=engine, table=uproc_tables.Protein.__table__)
-    drop(engine=engine, table=uproc_tables.Protein_type.__table__)
-
-
-def drop_tables():
-    engine = sqlalchemy.create_engine(os.environ['IMICROBE_DB_URI'], echo=False)
-
-    drop(engine=engine, table=uproc_tables.Protein_evidence.__table__)
-    drop(engine=engine, table=uproc_tables.Sample_to_protein.__table__)
-
-    drop(engine=engine, table=uproc_tables.Protein_evidence_type.__table__)
+    uproc_tables.Protein.__table__.drop(bind=engine, checkfirst=True)
+    uproc_tables.Protein_type.__table__.drop(bind=engine, checkfirst=True)
 
 
-def drop(engine, table):
-    print('dropping table "{}"'.format(table.name))
-    try:
-        with engine.connect() as connection:
-            for fk in table.foreign_key_constraints:
-                try:
-                    print('  dropping foreign key "{}"'.format(fk.name))
-                    connection.execute('ALTER TABLE {} DROP FOREIGN KEY {}'.format(
-                        table.name, fk.name))
-                    print('    dropped foreign key')
-                    print('  dropping index {}""'.format(fk.name))
-                    connection.execute('ALTER TABLE {} DROP INDEX {}'.format(
-                        table.name, fk.name))
-                    print('    dropped index')
-                except:
-                    print('  failed to drop foreign key "{}"'.format(fk.name))
-                    #print('  dropping key "{}"'.format(fk.name))
-                    #connection.execute('ALTER TABLE {} DROP KEY {}'.format(
-                    #    table.name, fk.name))
-                    #print('    dropped key')
-        print('  drop table "{}"'.format(table.name))
-        table.drop(bind=engine, checkfirst=True)
-        print('dropped table "{}"'.format(table.name))
-    except Exception as e:
-        print(e)
+def drop_results_tables(db_uri):
+    engine = sqlalchemy.create_engine(db_uri, echo=False)
+
+    #drop(engine=engine, table=uproc_tables.Protein_evidence.__table__)
+    #uproc_tables.Protein_evidence.__table__.drop(engine)
+
+    uproc_tables.Sample_to_protein.__table__.drop(bind=engine, checkfirst=True)
+    uproc_tables.Protein_evidence_type.__table__.drop(bind=engine, checkfirst=True)
 
 
-def load_protein_type_table():
-    with session_manager_from_db_uri(db_uri=os.environ['IMICROBE_DB_URI']) as imicrobe_db_session:
+def load_protein_type_table(db_uri):
+    with session_manager_from_db_uri(db_uri=db_uri) as imicrobe_db_session:
         protein_types = imicrobe_db_session.query(uproc_tables.Protein_type).all()
         protein_type_names = [protein_type.type_ for protein_type in protein_types]
         print(protein_type_names)
@@ -100,8 +116,8 @@ def load_protein_type_table():
                 imicrobe_db_session.add(uproc_tables.Protein_type(type_=p))
 
 
-def load_protein_evidence_type_table():
-    with session_manager_from_db_uri(db_uri=os.environ['IMICROBE_DB_URI']) as imicrobe_db_session:
+def load_protein_evidence_type_table(db_uri):
+    with session_manager_from_db_uri(db_uri=db_uri) as imicrobe_db_session:
         protein_evidence_types = imicrobe_db_session.query(uproc_tables.Protein_evidence_type).all()
         protein_evidence_type_names = [protien_evidence_type.type_ for protien_evidence_type in protein_evidence_types]
         print(protein_evidence_type_names)
@@ -123,7 +139,7 @@ def download_pfam_file():
         print('downloaded PFam file in {:5.2f}s'.format(time.time() - t0))
 
 
-def load_annotations():
+def load_annotations(db_uri, sample_limit):
     """Read UProC KEGG results files. Load KEGG annotations as needed.
 
     :return:
@@ -131,25 +147,26 @@ def load_annotations():
 
     uproc_results_file_name_re = re.compile(r'\.uproc\.(kegg|pfam\d+)$')
 
-    uproc_results_service = UProCResultsService()
+    uproc_results_service = UProCResultsService(db_uri)
 
     uproc_results_service.insert_pfam_annotations_from_file(pfamA_fp='pfamA.txt.gz')
 
-    uproc_results_limit = 10000
-    uproc_results_count = 0
     imicrobe_project_root = '/iplant/home/shared/imicrobe/projects'
     project_to_sample_collection_paths = get_project_sample_collection_paths(
-        collection_root=imicrobe_project_root)
+        collection_root=imicrobe_project_root, sample_limit=sample_limit)
 
     sample_count = sum([len(s) for p, s in project_to_sample_collection_paths.items()])
     sample_index = 0
+    t0 = time.time()
     for project_collection_path, sample_collection_paths in project_to_sample_collection_paths.items():
         print('project collection: "{}"'.format(project_collection_path))
 
+        # open a new irods session for each project
+        # seems to work better than using one session for all projects
         with irods_session_manager() as irods_session:
             for sample_collection_path in sample_collection_paths:
                 sample_index += 1
-                print('inserting results for sample {} of {}'.format(sample_index, sample_count))
+                print('* inserting results for sample {} of {}'.format(sample_index, sample_count))
                 sample_collection = irods_session.collections.get(sample_collection_path)
                 sample_data_objects = sample_collection.data_objects
 
@@ -195,7 +212,7 @@ def load_annotations():
 
                         combined_df.sort_values(by='read_count', inplace=True, ascending=False)
                         print('  combined data {}:\n{}'.format(combined_df.shape, combined_df.head()))
-                        t0 = time.time()
+                        t00 = time.time()
 
                         uproc_results_service.insert_kegg_annotations_for_sample(
                             annotation_results_df=combined_df[
@@ -209,21 +226,14 @@ def load_annotations():
                             sample_id=sample_collection.name)
 
                         print('  inserted {} annotations for sample in {:5.2f}s'.format(
-                            insertion_count, time.time()-t0))
-                        # count samples rather than files to decide if we should stop early
-                        uproc_results_count += 1
+                            insertion_count, time.time()-t00))
 
-            if uproc_results_limit <= 0:
-                # there is no limit
-                pass
-            elif uproc_results_limit < uproc_results_count:
-                # there is a limit and it has not been met
-                pass
-            else:
-                print('UProC result limit {} has been met'.format(uproc_results_limit))
-                break
+                        print('* inserted {} of {} samples in {:5.2f}s'.format(
+                            sample_index, sample_count, time.time()-t0))
 
-    with session_manager_from_db_uri(db_uri=os.environ['IMICROBE_DB_URI']) as imicrobe_db_session:
+    print('{} samples loaded'.format(sample_index))
+
+    with session_manager_from_db_uri(db_uri=db_uri) as imicrobe_db_session:
         sample_to_protein_count = imicrobe_db_session.query(uproc_tables.Sample_to_protein).count()
         print('loaded {} rows in sample_to_protein table'.format(sample_to_protein_count))
 
@@ -275,15 +285,17 @@ class UProCResultsService:
     Handle querying KEGG REST for annotations and inserting UProC results
     in iMicrobe database.
     """
-    def __init__(self):
+    def __init__(self, db_uri):
         """Build a cache of KEGG annotations. Initialize it with annotations
         already in the iMicrobe database. As new annotations are downloaded and
         inserted into the iMicrobe database also add them to the cache.
         """
+        self.db_uri = db_uri
+
         self.bad_accessions = set()
 
         self.annotation_db_ids = {}
-        with session_manager_from_db_uri(db_uri=os.environ['IMICROBE_DB_URI']) as imicrobe_db_session:
+        with session_manager_from_db_uri(db_uri=self.db_uri) as imicrobe_db_session:
             protein_list = imicrobe_db_session.query(uproc_tables.Protein).all()
             for protein in protein_list:
                 self.annotation_db_ids[protein.accession] = protein.protein_id
@@ -298,7 +310,7 @@ class UProCResultsService:
         :return:
         """
 
-        with session_manager_from_db_uri(db_uri=os.environ['IMICROBE_DB_URI']) as imicrobe_db_session:
+        with session_manager_from_db_uri(db_uri=self.db_uri) as imicrobe_db_session:
             t0 = time.time()
 
             missing_accession_list = itertools.filterfalse(
@@ -334,11 +346,11 @@ class UProCResultsService:
 
                     self.annotation_db_ids[accession] = new_protein_annotation.protein_id
 
-        print('downloaded {} annotations in {:5.2f}s'.format(len(kegg_annotations), time.time()-t0))
+        print('downloaded {} annotation(s) in {:5.2f}s'.format(len(kegg_annotations), time.time()-t0))
 
 
     def insert_pfam_annotations_from_file(self, pfamA_fp):
-        with session_manager_from_db_uri(db_uri=os.environ['IMICROBE_DB_URI']) as imicrobe_db_session:
+        with session_manager_from_db_uri(db_uri=self.db_uri) as imicrobe_db_session:
             t0 = time.time()
 
             debug = False
@@ -404,7 +416,7 @@ class UProCResultsService:
         :return:
         """
         print('inserting UProC results for sample_id {}'.format(sample_id))
-        with session_manager_from_db_uri(db_uri=os.environ['IMICROBE_DB_URI']) as imicrobe_db_session:
+        with session_manager_from_db_uri(db_uri=self.db_uri) as imicrobe_db_session:
             for accession, uproc_result_row in uproc_results_df.iterrows():
                 # is the protein annotation already in table protein?
                 #print('r: "{}" uproc_result_row:\n{}'.format(accession, uproc_result_row))
@@ -425,7 +437,7 @@ class UProCResultsService:
 
 
     def count_uproc_results_for_sample(self, sample_id):
-        with session_manager_from_db_uri(db_uri=os.environ['IMICROBE_DB_URI']) as imicrobe_db_session:
+        with session_manager_from_db_uri(db_uri=self.db_uri) as imicrobe_db_session:
             return imicrobe_db_session.query(uproc_tables.Sample_to_protein).filter(
                 uproc_tables.Sample_to_protein.sample_id == sample_id).count()
 
@@ -457,4 +469,4 @@ class UProCResultsService:
 
 
 if __name__ == '__main__':
-    main()
+    main(sys.argv[1:])
