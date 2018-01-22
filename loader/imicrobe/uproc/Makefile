@@ -13,8 +13,8 @@ copy-uproc-results-to-irods:
 
 # run on Myo
 test-load-all-tables:
-	python3 load.py -u $(IMICROBE_DB_URI) --sample-limit 10 > test-load-all-tables.log
+	python3 load.py -u $(IMICROBE_DB_URI) --sample-limit 10 &> test-load-all-tables.log
 
 # run on Myo
 load-all-tables:
-	python3 load.py -u $(IMICROBE_DB_URI) > load-all-tables.log
+	python3 load.py -u $(IMICROBE_DB_URI) &> load-all-tables.log
