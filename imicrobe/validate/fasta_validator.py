@@ -25,7 +25,7 @@ def main():
 def fasta_validate(fasta_glob, max_workers):
     print('glob: "{}"'.format(fasta_glob))
 
-    fasta_list = glob.glob(fasta_glob)
+    fasta_list = glob.glob(fasta_glob, recursive=True)
     print('  found {} files'.format(len(fasta_list)))
 
     good = []
