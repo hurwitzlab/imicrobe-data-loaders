@@ -22,6 +22,9 @@ These scripts require a Python 3.6+ interpreter, `make`, and iRODS iCommands.
 
 #### Stampede2
 
+Copying files from Stampede2 to /iplant/home/shared/imicrobe/ can take a long
+time.
+
 ```
 $ module load python3
 $ python3 -m venv ~/imdl
@@ -37,7 +40,10 @@ $ source ~/imdl/bin/activate
 Use a virtual environment for greatest happiness. All Python requirements will
 be installed automatically.
 
+Loading the database tables can take a long time. Consider using `screen`.
+
 ```
+$ screen
 $ python3.6 -m venv ~/imdl
 $ source ~/imdl/bin/activate
 (imdl) $ git clone https://github.com/hurwitzlab/imicrobe-data-loaders.git
@@ -45,6 +51,7 @@ $ source ~/imdl/bin/activate
 (imdl) $ pip install -r requirements.txt
 (imdl) $ write_models -o loader/imicrobe/models.py -u mysql+pymysql://imicrobe:<password>@localhost/imicrobe
 ##(imdl) $ write_models -o loader/muscope/models.py -u mysql+pymysql://imicrobe:<password>@localhost/muscope2
+(imdl) $ cd loader/imicrobe/uproc
 (imdl) $ make load-all-tables
 ```
 

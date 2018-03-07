@@ -12,13 +12,13 @@ import os
 import sys
 import time
 
-import loader.util.irods as irods
+import imicrobe.util.irods as irods
 
 
 def copy_uproc_output_to_irods(source_root, target_root, file_limit):
     """
-    This is intended to run on Stampede2 in the imicrobe account.
-    Walk the imicrobe directory and copy each UProC output file to IRODS /iplant/share/imicrobe/
+    This is intended to run on Stampede2 in the load account.
+    Walk the load directory and copy each UProC output file to IRODS /iplant/share/load/
     :return:
     """
 
@@ -49,7 +49,7 @@ def copy_uproc_output_to_irods(source_root, target_root, file_limit):
                 uproc_source_fp = os.path.join(parent_dir, f)
                 # combine target_root such as "/iplant/home/shared/imicrobe/projects/"
                 # with the section of parent_dir following the source_root, for example
-                # if source_root is "/work/05066/imicrobe/iplantc.org/data/imicrobe/projects"
+                # if source_root is "/work/05066/load/iplantc.org/data/load/projects"
                 # and parent_dir is "/work/05066/imicrobe/iplantc.org/data/microbe/projects/193/samples/4078/"
                 # then we want to take "193/samples/4078/" from parent_dir and append it to target_root to form
                 # "/iplant/home/shared/imicrobe/projects/193/samples/4078/"

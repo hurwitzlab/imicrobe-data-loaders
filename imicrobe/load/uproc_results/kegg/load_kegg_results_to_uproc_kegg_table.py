@@ -74,7 +74,7 @@ def main():
     #print(args)
 
     # connect to database on server
-    # e.g. mysql+pymysql://imicrobe:<password>@localhost/imicrobe
+    # e.g. mysql+pymysql://load:<password>@localhost/load
     db_uri = os.environ.get('IMICROBE_DB_URI')
     imicrobe_engine = sa.create_engine(db_uri, echo=False)
     # reflect tables
@@ -308,7 +308,7 @@ def load_all_samples_to_uproc_kegg_table_from_directory_tree(dir_root, session_c
                 sample_file = session.query(
                     models.Sample_file).filter(
                         models.Sample_file.sample_id == sample_id,
-                        models.Sample_file.file == '/iplant/home/shared/imicrobe/projects/{}/samples/{}/{}'.format(
+                        models.Sample_file.file == '/iplant/home/shared/load/projects/{}/samples/{}/{}'.format(
                             project_id, sample_id, file_name)).one()
 
                 print(sample_file)

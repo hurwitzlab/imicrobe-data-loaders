@@ -11,7 +11,7 @@ import imicrobe_model.models as models
 
 def main():
     # connect to database on server
-    # e.g. mysql+pymysql://imicrobe:<password>@localhost/imicrobe
+    # e.g. mysql+pymysql://load:<password>@localhost/load
     db_uri = os.environ.get('IMICROBE_DB_URI')
     engine = sa.create_engine(db_uri, echo=False)
 

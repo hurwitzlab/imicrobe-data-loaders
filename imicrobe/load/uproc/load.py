@@ -16,10 +16,10 @@ import sqlalchemy
 
 from orminator import session_manager_from_db_uri
 
-import loader.imicrobe.uproc.tables as uproc_tables
-from loader.util import grouper
-from loader.util.irods import get_project_sample_collection_paths, irods_session_manager
-from loader.util.kegg import get_kegg_annotations
+import imicrobe.load.uproc.tables as uproc_tables
+from imicrobe.util import grouper
+from imicrobe.util.irods import get_project_sample_collection_paths, irods_session_manager
+from imicrobe.util.kegg import get_kegg_annotations
 
 
 def get_args(argv):
@@ -151,7 +151,7 @@ def load_annotations(db_uri, sample_limit):
 
     uproc_results_service.insert_pfam_annotations_from_file(pfamA_fp='pfamA.txt.gz')
 
-    imicrobe_project_root = '/iplant/home/shared/imicrobe/projects'
+    imicrobe_project_root = '/iplant/home/shared/load/projects'
     project_to_sample_collection_paths = get_project_sample_collection_paths(
         collection_root=imicrobe_project_root, sample_limit=sample_limit)
 
@@ -299,7 +299,7 @@ class UProCResultsService:
             protein_list = imicrobe_db_session.query(uproc_tables.Protein).all()
             for protein in protein_list:
                 self.annotation_db_ids[protein.accession] = protein.protein_id
-            print('found {} protein annotations in imicrobe database'.format(len(self.annotation_db_ids)))
+            print('found {} protein annotations in load database'.format(len(self.annotation_db_ids)))
 
 
     def insert_kegg_annotations_for_sample(self, annotation_results_df):

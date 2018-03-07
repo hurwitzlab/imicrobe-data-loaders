@@ -3,7 +3,7 @@ import os
 import pytest
 import sqlalchemy as sa
 
-from loader.imicrobe import models
+from imicrobe.load import models
 from orminator import session_manager_from_db_uri
 
 @pytest.fixture()

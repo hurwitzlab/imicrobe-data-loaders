@@ -1,6 +1,6 @@
 import os
 
-from loader.util import take
+from imicrobe.util import take
 
 from irods.keywords import FORCE_FLAG_KW
 from irods.session import iRODSSession
@@ -100,7 +100,7 @@ def walk(walk_root):
 
 
 def get_project_sample_collection_paths(
-        collection_root='/iplant/home/shared/imicrobe/projects',
+        collection_root='/iplant/home/shared/load/projects',
         sample_limit=None):
     """Return a dictionary of project paths to lists of sample paths.
 

@@ -1,4 +1,4 @@
-from loader.imicrobe.uproc import tables
+from imicrobe.load.uproc import tables
 
 
 def test_protein(test_session):

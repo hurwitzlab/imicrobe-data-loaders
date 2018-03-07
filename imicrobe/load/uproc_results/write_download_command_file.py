@@ -39,10 +39,10 @@ def main():
 
     with open(irods_source_fp, 'rt') as ils_listing:
         """ ils -r output looks like this:
-        /iplant/home/shared/imicrobe/projects:
+        /iplant/home/shared/load/projects:
           rename.sh.uproc
-          C- /iplant/home/shared/imicrobe/projects/1
-        /iplant/home/shared/imicrobe/projects/1:
+          C- /iplant/home/shared/load/projects/1
+        /iplant/home/shared/load/projects/1:
           CAM_PROJ_AcidMine.asm.fa
           CAM_PROJ_AcidMine.csv
           CAM_PROJ_AcidMine.read.fa
@@ -50,10 +50,10 @@ def main():
           centrifuge.csv
           centrifuge.png
           sample-attr.tab
-          C- /iplant/home/shared/imicrobe/projects/1/samples
-        /iplant/home/shared/imicrobe/projects/1/samples:
-          C- /iplant/home/shared/imicrobe/projects/1/samples/1
-        /iplant/home/shared/imicrobe/projects/1/samples/1:
+          C- /iplant/home/shared/load/projects/1/samples
+        /iplant/home/shared/load/projects/1/samples:
+          C- /iplant/home/shared/load/projects/1/samples/1
+        /iplant/home/shared/load/projects/1/samples/1:
           JGI_AMD_5WAY_IRNMTN_SMPL_20020301.centrifuge.sum
           JGI_AMD_5WAY_IRNMTN_SMPL_20020301.centrifuge.tsv
           JGI_AMD_5WAY_IRNMTN_SMPL_20020301.fa
@@ -61,7 +61,7 @@ def main():
           JGI_AMD_5WAY_IRNMTN_SMPL_20020301.fa.uproc
           centrifuge.csv
           centrifuge.png
-          C- /iplant/home/shared/imicrobe/projects/1/samples/2
+          C- /iplant/home/shared/load/projects/1/samples/2
         """
         # the first line is the top-level directory
         # slice off the colon

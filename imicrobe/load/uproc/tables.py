@@ -2,7 +2,7 @@ import sqlalchemy as sa
 import sqlalchemy.orm as orm
 from sqlalchemy.dialects import mysql
 
-from loader.imicrobe import models
+from imicrobe.load import models
 
 
 """

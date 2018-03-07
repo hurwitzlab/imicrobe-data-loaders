@@ -6,7 +6,7 @@ from collections import defaultdict
 import requests
 import requests_cache
 
-from loader.util import grouper
+from imicrobe.util import grouper
 
 
 requests_cache.install_cache('kegg_api_cache')
