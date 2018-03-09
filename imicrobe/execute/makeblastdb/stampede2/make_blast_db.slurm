@@ -13,7 +13,7 @@ module load blast
 module load launcher
 module load tacc-singularity
 
-IMG=../../../../singularity/image.img
+IMG=../../../../singularity/imdl.img
 IMICROBE_PROJECTS=/work/05066/imicrobe/iplantc.org/data/imicrobe/projects
 
 export BLAST_DB_OUTPUT=/work/05066/imicrobe/iplantc.org/data/blast/one-db
