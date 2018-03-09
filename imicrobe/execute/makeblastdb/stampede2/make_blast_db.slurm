@@ -27,7 +27,7 @@ find ${IMICROBE_PROJECTS} \
     -size +0c \
     | sort \
     | uniq \
-    | singularity exec ${IMG} filter_files bad-fasta-files.txt \
+    | singularity exec ${IMG} filter_lines bad-fasta-files.txt \
     > imicrobe-fasta-list.txt
 
 split --lines=550 imicrobe-fasta-list.txt imicrobe-
