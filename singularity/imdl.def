@@ -10,10 +10,10 @@ From: ubuntu:latest
     apt update
     apt install -y apt-utils git build-essential python3 python3-pip
 
-    # install biopython for python3
-    pip3 install biopython sqlalchemy
+    ## install biopython for python3
+    #pip3 install biopython sqlalchemy
 
-    pip3 install -r requirements.txt
+    pip3 install -r /imicrobe-data-loaders/requirements-container.txt
 
     # create a directory for installed dependencies
     APP_DIR=/app
