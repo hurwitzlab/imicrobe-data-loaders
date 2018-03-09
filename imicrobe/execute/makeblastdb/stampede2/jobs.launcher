@@ -1,0 +1,8 @@
+makeblastdb -title "iMicrobe" -dbtype nucl -out ${BLAST_DB_OUTPUT}/imicrobe-aa -logfile blastdb-imicrobe-aa-log -in "`cat imicrobe-aa | tr '\n' ' '`"
+makeblastdb -title "iMicrobe" -dbtype nucl -out ${BLAST_DB_OUTPUT}/imicrobe-ab -logfile blastdb-imicrobe-ab-log -in "`cat imicrobe-ab | tr '\n' ' '`"
+makeblastdb -title "iMicrobe" -dbtype nucl -out ${BLAST_DB_OUTPUT}/imicrobe-ac -logfile blastdb-imicrobe-ac-log -in "`cat imicrobe-ac | tr '\n' ' '`"
+makeblastdb -title "iMicrobe" -dbtype nucl -out ${BLAST_DB_OUTPUT}/imicrobe-ad -logfile blastdb-imicrobe-ad-log -in "`cat imicrobe-ad | tr '\n' ' '`"
+makeblastdb -title "iMicrobe" -dbtype nucl -out ${BLAST_DB_OUTPUT}/imicrobe-ae -logfile blastdb-imicrobe-ae-log -in "`cat imicrobe-ae | tr '\n' ' '`"
+makeblastdb -title "iMicrobe" -dbtype nucl -out ${BLAST_DB_OUTPUT}/imicrobe-af -logfile blastdb-imicrobe-af-log -in "`cat imicrobe-af | tr '\n' ' '`"
+makeblastdb -title "iMicrobe" -dbtype nucl -out ${BLAST_DB_OUTPUT}/imicrobe-ag -logfile blastdb-imicrobe-ag-log -in "`cat imicrobe-ag | tr '\n' ' '`"
+makeblastdb -title "iMicrobe" -dbtype nucl -out ${BLAST_DB_OUTPUT}/imicrobe-ah -logfile blastdb-imicrobe-ah-log -in "`cat imicrobe-ah | tr '\n' ' '`"

@@ -1,0 +1,33 @@
+Bootstrap: docker
+From: ubuntu:latest
+
+%setup
+    # mount the imicrobe-data-loaders directory for use in %post
+    mkdir "$SINGULARITY_ROOTFS/imicrobe-data-loaders"
+    mount --no-mtab --bind `pwd` "$SINGULARITY_ROOTFS/imicrobe-data-loaders"
+
+%post
+    apt update
+    apt install -y apt-utils git build-essential python3 python3-pip
+
+    # install biopython for python3
+    pip3 install biopython sqlalchemy
+
+    pip3 install -r requirements.txt
+
+    # create a directory for installed dependencies
+    APP_DIR=/app
+    mkdir -p $APP_DIR
+
+    # create mount points for TACC directories
+    mkdir /home1
+    mkdir /scratch
+    mkdir /work
+
+    # create mount points for AZ HPC directories
+    mkdir /rsgrps
+    mkdir /extra
+    mkdir /xdisk
+
+%test
+    python3 --version
