@@ -8,7 +8,6 @@ iput-container:
 	iput -fK singularity/imdl.img
 
 iget-container:
-	cd singularity
-	iget -fK imdl.img
+	cd singularity; iget -fK imdl.img
 	irm imdl.img
 
