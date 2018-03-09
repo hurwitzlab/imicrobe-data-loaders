@@ -13,7 +13,8 @@ From: ubuntu:latest
     ## install biopython for python3
     #pip3 install biopython sqlalchemy
 
-    pip3 install -r /imicrobe-data-loaders/requirements-container.txt
+    cd /imicrobe-data-loaders
+    pip3 install -r requirements-container.txt
 
     # create a directory for installed dependencies
     APP_DIR=/app
