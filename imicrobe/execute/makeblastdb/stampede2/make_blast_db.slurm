@@ -28,9 +28,15 @@ find ${IMICROBE_PROJECTS} \
     | sort \
     | uniq \
     | singularity exec ${IMG} filter_lines bad-fasta-files.txt \
+    | singularity exec ${IMG} permute_lines \
     > imicrobe-fasta-list.txt
 
-split --lines=550 imicrobe-fasta-list.txt imicrobe-
+
+FILE_GROUPS=16
+
+cat imicrobe-fasta-list.txt | singularity exec ${IMG} split_lines -n ${FILE_GROUPS} --prefix imicrobe-
+
+#split --lines=550 imicrobe-fasta-list.txt imicrobe-
 
 wc -l imicrobe-*
 
@@ -48,7 +54,7 @@ echo "LAUNCHER_WORKDIR: $LAUNCHER_WORKDIR"
 
 # by default LAUNCHER_PPN is 8 (?)
 # use LAUNCHER_PPN to control the number of jobs on each node
-export LAUNCHER_PPN=8
+export LAUNCHER_PPN=${FILE_GROUPS}
 
 export LAUNCHER_SCHEDULER=interleaved
 

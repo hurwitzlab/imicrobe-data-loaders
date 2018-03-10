@@ -100,7 +100,9 @@ setup(
     # pip to create the appropriate form of executable for the target platform.
     entry_points={
         'console_scripts': [
-            'filter_lines=imicrobe.execute.makeblastdb.filter_lines:main'
+            'filter_lines=imicrobe.execute.makeblastdb.filter_lines:main',
+            'permute_lines=imicrobe.execute.makeblastdb.permute_lines:main',
+            'split_lines=imicrobe.execute.makeblastdb.split_lines:main'
         ],
     },
 )
