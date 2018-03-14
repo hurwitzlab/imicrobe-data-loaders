@@ -5,6 +5,8 @@ import sys
 import time
 
 from Bio import SeqIO
+from Bio import Alphabet
+from Bio.Alphabet import IUPAC
 
 
 def get_args(argv):
@@ -53,7 +55,12 @@ def fasta_validate(fasta_glob, max_workers):
 def parse_fasta(fasta_fp):
     t0 = time.time()
     read_count = 0
-    for record in SeqIO.parse(fasta_fp, 'fasta'):
+    for record in SeqIO.parse(fasta_fp, format='fasta', alphabet=IUPAC.ambiguous_dna):
+        if Alphabet._verify_alphabet(record.seq):
+            pass
+        else:
+            raise Exception()
+
         if len(record.seq) == 0:
             raise Exception()
         read_count += 1

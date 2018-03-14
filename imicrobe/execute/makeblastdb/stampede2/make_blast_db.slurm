@@ -18,7 +18,7 @@ IMICROBE_PROJECTS=/work/05066/imicrobe/iplantc.org/data/imicrobe/projects
 
 export BLAST_DB_OUTPUT=/work/05066/imicrobe/iplantc.org/data/blast/one-db
 
-#cd /work/05066/imicrobe/iplantc.org/data/blast/one-db
+mkdir -p $BLAST_DB_OUTPUT
 
 find ${IMICROBE_PROJECTS} \
     -type f \
@@ -35,8 +35,6 @@ find ${IMICROBE_PROJECTS} \
 FILE_GROUPS=16
 
 cat imicrobe-fasta-list.txt | singularity exec ${IMG} split_lines -n ${FILE_GROUPS} --prefix imicrobe-
-
-#split --lines=550 imicrobe-fasta-list.txt imicrobe-
 
 wc -l imicrobe-*
 
