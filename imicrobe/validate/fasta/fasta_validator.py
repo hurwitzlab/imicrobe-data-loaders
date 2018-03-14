@@ -57,11 +57,11 @@ def parse_fasta(fasta_fp):
     read_count = 0
     for record in SeqIO.parse(fasta_fp, format='fasta', alphabet=IUPAC.ambiguous_dna):
         read_count += 1
-        seq_letters = set(str(record.seq))
+        seq_letters = set(str(record.seq).upper())
         if len(seq_letters.difference(alphabet)) == 0:
             pass
         else:
-            msg ='{}: Failed to parse sequence {}\nid: {}\nsequence: {}'.format(fasta_fp, read_count, record.id, record.seq)
+            msg ='{}: Failed to parse sequence {}\nid: {}\nsequence: {}'.format(fasta_fp, read_count, record.id, record.seq[:1000])
             raise Exception(msg)
 
         if len(record.seq) == 0:
