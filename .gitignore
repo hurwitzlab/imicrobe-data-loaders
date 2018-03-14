@@ -1,3 +1,5 @@
+*.fa
+
 *.uproc.kegg
 kegg_api_cache.sqlite
 
