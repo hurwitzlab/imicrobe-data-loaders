@@ -47,9 +47,9 @@ def fasta_validate(fasta_glob, max_workers):
         for i, fp in enumerate(sorted(bad)):
             print('\t{}: {}'.format(i+1, fp))
 
-        print('good files:')
-        for i, (fp, read_count, t) in enumerate(sorted(good)):
-            print('\t{}: {} {} read(s) in {:5.2f}s'.format(i+1, fp, read_count, t))
+        #print('good files:')
+        #for i, (fp, read_count, t) in enumerate(sorted(good)):
+        #    print('\t{}: {} {} read(s) in {:5.2f}s'.format(i+1, fp, read_count, t))
 
 
 def parse_fasta(fasta_fp):
