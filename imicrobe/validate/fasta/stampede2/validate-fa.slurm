@@ -3,7 +3,7 @@
 #SBATCH -A iPlant-Collabs
 #SBATCH -N 1
 #SBATCH -n 1
-#SBATCH -t 04:00:00
+#SBATCH -t 12:00:00
 #SBATCH -p skx-normal
 #SBATCH -J validate-fasta
 #SBATCH --mail-type BEGIN,END,FAIL
