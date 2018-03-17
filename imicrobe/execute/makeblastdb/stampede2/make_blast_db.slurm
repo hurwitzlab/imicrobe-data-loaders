@@ -10,13 +10,15 @@
 #SBATCH --mail-user jklynch@email.arizona.edu
 
 module load blast
-module load launcher
 module load tacc-singularity
+
+module use /scratch/01255/siliu/modulefiles
+module load launcher/3.2
 
 IMG=../../../../singularity/imdl.img
 IMICROBE_PROJECTS=/work/05066/imicrobe/iplantc.org/data/imicrobe/projects
 
-export BLAST_DB_OUTPUT=/work/05066/imicrobe/iplantc.org/data/blast/one-db
+export BLAST_DB_OUTPUT=/work/05066/imicrobe/iplantc.org/data/blast/db24
 
 mkdir -p $BLAST_DB_OUTPUT
 
@@ -32,7 +34,7 @@ find ${IMICROBE_PROJECTS} \
     > imicrobe-fasta-list.txt
 
 
-FILE_GROUPS=16
+FILE_GROUPS=24
 
 cat imicrobe-fasta-list.txt | singularity exec ${IMG} split_lines -n ${FILE_GROUPS} --prefix imicrobe-
 
@@ -54,7 +56,7 @@ echo "LAUNCHER_WORKDIR: $LAUNCHER_WORKDIR"
 # use LAUNCHER_PPN to control the number of jobs on each node
 export LAUNCHER_PPN=${FILE_GROUPS}
 
-export LAUNCHER_SCHEDULER=interleaved
+export LAUNCHER_SCHEDULER=dynamic
 
 export LAUNCHER_JOB_FILE=jobs.launcher
 $LAUNCHER_DIR/paramrun
