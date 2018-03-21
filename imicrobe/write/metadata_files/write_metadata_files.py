@@ -48,7 +48,7 @@ def write_sample_metadata_files(target_root, file_limit):
             # find the FASTA file
             for fp in specimen_files:
 
-                if not fp.startswith('/iplant/')
+                if not fp.startswith('/iplant/'):
                     # avoid ftp
                     pass
                 elif sequence_file_extensions.search(fp) is None:
