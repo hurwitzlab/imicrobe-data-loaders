@@ -101,7 +101,7 @@ def write_sample_metadata_files(target_root, file_limit):
 def main(argv):
     arg_parser = argparse.ArgumentParser()
     arg_parser.add_argument('--target-root', default='/iplant/home/shared/imicrobe/projects')
-    arg_parser.add_argument('--file-limit', type=int, default=None, required=False)
+    arg_parser.add_argument('--file-limit', type=int, default=0, required=False)
 
     args = arg_parser.parse_args(args=argv)
 
