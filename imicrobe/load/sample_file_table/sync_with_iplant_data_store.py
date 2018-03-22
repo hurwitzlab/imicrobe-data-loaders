@@ -1,6 +1,6 @@
 import os
 
-import imicrobe.load.models as models
+import imicrobe.models as models
 from orminator import session_manager_from_db_uri
 
 
