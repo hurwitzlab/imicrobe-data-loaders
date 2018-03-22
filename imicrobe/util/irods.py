@@ -77,6 +77,8 @@ def irods_data_object_exists(irods_session, target_path):
     try:
         irods_session.data_objects.get(target_path)
         return True
+    except CollectionDoesNotExist:
+        return False
     except DataObjectDoesNotExist:
         return False
 
