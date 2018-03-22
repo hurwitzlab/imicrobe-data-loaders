@@ -4,6 +4,7 @@ to iRODS.
 """
 import argparse
 from itertools import islice
+import json
 import os
 import pprint
 import re
@@ -89,14 +90,19 @@ def write_sample_metadata_files(target_root, file_limit):
                 files_to_be_written[metadata_fp] = sample_metadata
     print('found {} files to be written in {:5.2f}s'.format(len(files_to_be_written), time.time()-t0))
 
+    t0 = time.time()
     print('\nwriting {} files'.format(len(files_to_be_written)))
-
-    #for source_fp, target_fp in sorted(files_to_be_copied.items()):
-    #    print('copying\n\t"{}"\nto \n\t"{}"'.format(source_fp, target_fp))
-    #    t0 = time.time()
-    #    copy_file_to_irods(source_fp, target_fp)
-    #    print('finished copy in {:5.2f}s'.format(time.time()-t0))
-
+    with irods.irods_session_manager() as irods_session:
+        for metadata_fp, sample_metadata in sorted(files_to_be_written.items()):
+            print('writing {}'.format(metadata_fp))
+            # remove mongo _id field - it will not serialize
+            del sample_metadata['_id']
+            irods.irods_write_data_object(
+                irods_session,
+                metadata_fp,
+                content=json.dumps(sample_metadata, indent=2))
+            #print(json.dumps(sample_metadata, indent=2))
+    print('wrote {} metadata files in {:5.3f}s'.format(len(files_to_be_written), time.time()-t0))
 
 def main(argv):
     arg_parser = argparse.ArgumentParser()
