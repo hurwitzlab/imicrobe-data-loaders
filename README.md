@@ -29,6 +29,7 @@ time.
 $ module load python3
 $ python3 -m venv ~/imdl
 $ source ~/imdl/bin/activate
+(imdl) $ pip install --upgrade pip
 (imdl) $ git clone https://github.com/hurwitzlab/imicrobe-data-loaders.git
 (imdl) $ cd imicrobe-data-loaders
 (imdl) $ pip install -r requirements.txt
@@ -46,12 +47,12 @@ Loading the database tables can take a long time. Consider using `screen`.
 $ screen
 $ python3.6 -m venv ~/imdl
 $ source ~/imdl/bin/activate
+(imdl) $ pip install --upgrade pip
 (imdl) $ git clone https://github.com/hurwitzlab/imicrobe-data-loaders.git
 (imdl) $ cd imicrobe-data-loaders
 (imdl) $ pip install -r requirements.txt
-(imdl) $ write_models -o loader/imicrobe/models.py -u mysql+pymysql://imicrobe:<password>@localhost/imicrobe
-##(imdl) $ write_models -o loader/muscope/models.py -u mysql+pymysql://imicrobe:<password>@localhost/muscope2
-(imdl) $ cd loader/imicrobe/uproc
+(imdl) $ write_models -o imicrobe/models.py -u mysql+pymysql://imicrobe:<password>@localhost/imicrobe
+(imdl) $ cd imicrobe/load/uproc
 (imdl) $ make load-all-tables
 ```
 
@@ -72,11 +73,11 @@ Use a virtual environment!
 ```
 $ python3.6 -m venv ~/imdl
 $ source ~/imdl/bin/activate
+(imdl) $ pip install --upgrade pip
 (imdl) $ git clone https://github.com/hurwitzlab/imicrobe-data-loaders.git
 (imdl) $ cd imicrobe-data-loaders
 (imdl) $ pip install -r requirements.txt
 (imdl) $ write_models -o imicrobe/models.py -u mysql+pymysql://imicrobe:<password>@localhost/imicrobe
-(imdl) $ write_models -o muscope/models.py -u mysql+pymysql://imicrobe:<password>@localhost/muscope2
 ```
 
 ### Usage: load UProC results
