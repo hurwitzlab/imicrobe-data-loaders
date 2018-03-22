@@ -62,7 +62,7 @@ def main(argv):
     print(args)
 
     if args.drop_results_tables:
-         drop_results_tables(args.db_uri)
+        drop_results_tables(args.db_uri)
     if args.drop_annotation_tables:
         drop_annotation_tables(args.db_uri)
     create_tables(args.db_uri)
