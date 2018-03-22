@@ -8,5 +8,5 @@ from orminator import session_manager_from_db_uri
 
 with session_manager_from_db_uri(db_uri=os.environ['IMICROBE_DB_URI']) as imicrobe_db_session:
     for sample_file in imicrobe_db_session.query(models.Sample_file).all():
-        print(sample_file)
+        print(dir(sample_file))
         break
