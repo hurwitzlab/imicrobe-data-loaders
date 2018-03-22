@@ -54,6 +54,17 @@ def irods_data_object_checksums_match(irods_session, path_1, path_2):
     return data_object_1.checksum == data_object_2.checksum
 
 
+def irods_write_data_object(irods_session, dest_path, content):
+    if irods_data_object_exists(irods_session, dest_path):
+        irods_delete(irods_session, dest_path)
+    else:
+        pass
+
+    target_obj = irods_session.data_objects.create(dest_path)
+    with target_obj.open('r+') as target:
+        target.write(content.encode('utf-8'))
+
+
 def irods_copy(irods_session, src_path, dest_path):
     irods_session.data_objects.copy(src_path=src_path, dest_path=dest_path, **{FORCE_FLAG_KW: True})
 
