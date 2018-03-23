@@ -97,8 +97,10 @@ def irods_delete_collection(irods_session, target_collection_path):
         print('unable to delete collection "{}" because it does not exist'.format(target_collection_path))
 
 
-def walk(walk_root):
-    print('walk root is "{}"'.format(walk_root))
+def walk(walk_root, verbose=False):
+    if verbose:
+        print('walk root is "{}"'.format(walk_root))
+
     with irods_session_manager() as irods_session:
         collection_stack = list()
         p = irods_session.collections.get(walk_root)
