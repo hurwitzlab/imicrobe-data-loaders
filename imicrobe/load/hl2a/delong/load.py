@@ -21,7 +21,7 @@ to
 import os
 import time
 
-import imicrobe.load.models as im
+import imicrobe.models as im
 from imicrobe.util.irods import \
     irods_copy, irods_create_collection, irods_data_object_checksums_match, \
     irods_data_object_exists, irods_delete, irods_delete_collection, irods_session_manager
@@ -52,11 +52,11 @@ with session_manager_from_db_uri(db_uri=os.environ.get('MUSCOPE_DB_URI')) as mu_
                 im.Sample.sample_acc == mu_sample.sample_name).one_or_none()
 
             if im_sample is None:
-                print('sample "{}" does not exist in load database'.format(mu_sample.sample_name))
+                print('sample "{}" does not exist in imicrobe database'.format(mu_sample.sample_name))
             else:
-                print('found sample "{}" in load database'.format(im_sample.sample_name))
+                print('found sample "{}" in imicrobe database'.format(im_sample.sample_name))
                 if delete_imicrobe_samples:
-                    print('  deleting sample "{}" from load database'.format(im_sample.sample_name))
+                    print('  deleting sample "{}" from imicrobe database'.format(im_sample.sample_name))
                     im_session.delete(im_sample)
                     # force the delete or things go bad when the new sample is added
                     im_session.flush()
@@ -65,7 +65,7 @@ with session_manager_from_db_uri(db_uri=os.environ.get('MUSCOPE_DB_URI')) as mu_
                     pass
 
             if im_sample is None:
-                print('creating sample "{}" in load database'.format(mu_sample.sample_name))
+                print('creating sample "{}" in imicrobe database'.format(mu_sample.sample_name))
                 im_sample = im.Sample(
                     project_id=hl2a_delong_project_id,
                     sample_acc=mu_sample.sample_name,
@@ -77,7 +77,7 @@ with session_manager_from_db_uri(db_uri=os.environ.get('MUSCOPE_DB_URI')) as mu_
                     url='none')
                 im_session.add(im_sample)
             else:
-                print('sample "{}" unchanged in load database'.format(im_sample.sample_name))
+                print('sample "{}" unchanged in imicrobe database'.format(im_sample.sample_name))
 
             # need sample_id to find attributes and derive sample file path
             im_sample_id = im_session.query(im.Sample.sample_id).filter(
@@ -92,17 +92,17 @@ with session_manager_from_db_uri(db_uri=os.environ.get('MUSCOPE_DB_URI')) as mu_
                 im_sample_attr_type = im_session.query(im.Sample_attr_type).filter(
                     im.Sample_attr_type.type_ == mu_sample_attr.sample_attr_type.type_).one_or_none()
                 if im_sample_attr_type is None:
-                    print('sample attribute type "{}" does not exist in load'.format(
+                    print('sample attribute type "{}" does not exist in imicrobe'.format(
                         mu_sample_attr.sample_attr_type.type_))
                 else:
-                    print('  setting load sample attribute with type "{}" to "{}"'.format(
+                    print('  setting imicrobe sample attribute with type "{}" to "{}"'.format(
                         mu_sample_attr.sample_attr_type.type_, mu_sample_attr.value))
 
                     im_sample_attr = im_session.query(im.Sample_attr).filter(
                         im.Sample_attr.sample == im_sample).filter(
                         im.Sample_attr.sample_attr_type == im_sample_attr_type).one_or_none()
                     if im_sample_attr is None:
-                        print('  creating load sample attribute with type "{}" and value "{}" for sample "{}"'.format(
+                        print('  creating imicrobe sample attribute with type "{}" and value "{}" for sample "{}"'.format(
                             mu_sample_attr.sample_attr_type.type_,
                             mu_sample_attr.value,
                             im_sample.sample_name))
@@ -111,20 +111,20 @@ with session_manager_from_db_uri(db_uri=os.environ.get('MUSCOPE_DB_URI')) as mu_
                         im_sample_attr.sample_attr_type = im_sample_attr_type
                         im_sample_attr.attr_value = mu_sample_attr.value
                     elif im_sample_attr.attr_value == mu_sample_attr.value:
-                        print('  load sample "{}" has attribute "{}" with value "{}" matching muscope sample attribute value "{}"'.format(
+                        print('  imicrobe sample "{}" has attribute "{}" with value "{}" matching muscope sample attribute value "{}"'.format(
                             im_sample.sample_name,
                             im_sample_attr.sample_attr_type.type_,
                             im_sample_attr.attr_value,
                             mu_sample_attr.value
                         ))
                     else:
-                        print('  load sample "{}" has attribute "{}" with value "{}" NOT matching muscope sample attribute value "{}"'.format(
+                        print('  imicrobe sample "{}" has attribute "{}" with value "{}" NOT matching muscope sample attribute value "{}"'.format(
                             im_sample.sample_name,
                             im_sample_attr.sample_attr_type.type_,
                             im_sample_attr.attr_value,
                             mu_sample_attr.value
                         ))
-                        print('    load sample attribute will be updated to match muscope attribute')
+                        print('    imicrobe sample attribute will be updated to match muscope attribute')
                         im_sample_attr.attr_value = mu_sample_attr.value
 
             # copy sample files from muscope to imicrobe
@@ -133,9 +133,9 @@ with session_manager_from_db_uri(db_uri=os.environ.get('MUSCOPE_DB_URI')) as mu_
             # with this sample then check they have the expected sample_id
             # if not then delete the sample file(s)
             if len(im_sample.sample_file_list) == 0:
-                print('  load sample "{}" has no associated sample files yet'.format(im_sample.sample_name))
+                print('  imicrobe sample "{}" has no associated sample files yet'.format(im_sample.sample_name))
             else:
-                print('  {} sample files are associated with load sample "{}"'.format(
+                print('  {} sample files are associated with imicrobe sample "{}"'.format(
                     len(im_sample.sample_file_list), im_sample.sample_name))
                 with irods_session_manager() as irods_session:
                     # sample files are in collections such as this:
@@ -171,7 +171,7 @@ with session_manager_from_db_uri(db_uri=os.environ.get('MUSCOPE_DB_URI')) as mu_
                         and (mu_sample_file.file_.endswith('_001.fastq') or
                              mu_sample_file.file_.endswith('readpool.fastq.gz')):
 
-                    im_sample_collection_path = '/iplant/home/shared/load/projects/{}/sample/{}'.format(
+                    im_sample_collection_path = '/iplant/home/shared/imicrobe/projects/{}/sample/{}'.format(
                         hl2a_delong_project_id,
                         im_sample_id)
                     im_sample_file_path = '{}/{}'.format(
@@ -180,21 +180,21 @@ with session_manager_from_db_uri(db_uri=os.environ.get('MUSCOPE_DB_URI')) as mu_
 
                     # is im_sample already associated with the imicrobe version of this file?
                     mu_sample_file_basename = os.path.basename(mu_sample_file.file_)
-                    print('searching for load sample file with basename "{}"'.format(mu_sample_file_basename))
+                    print('searching for imicrobe sample file with basename "{}"'.format(mu_sample_file_basename))
                     im_sample_file = im_session.query(im.Sample_file).filter(
                         im.Sample_file.sample == im_sample).filter(
                         im.Sample_file.sample_file_type == im_sample_file_type_reads).filter(
                         im.Sample_file.file_.like('%{}'.format(mu_sample_file_basename))).one_or_none()
 
                     if im_sample_file is None:
-                        print('  creating load sample file "{}"'.format(im_sample_file_path))
+                        print('  creating imicrobe sample file "{}"'.format(im_sample_file_path))
 
                         im_sample_file = im.Sample_file(file_=im_sample_file_path)
                         im_sample_file.sample = im_sample
                         im_sample_file.sample_file_type = im_sample_file_type_reads
 
                     else:
-                        print('  load sample file "{}" already exists'.format(im_sample_file_path))
+                        print('  imicrobe sample file "{}" already exists'.format(im_sample_file_path))
 
                     print('  + copying file "{}"'.format(mu_sample_file.file_))
                     print('    to file "{}"'.format(im_sample_file_path))
@@ -208,7 +208,7 @@ with session_manager_from_db_uri(db_uri=os.environ.get('MUSCOPE_DB_URI')) as mu_
 
                             if irods_data_object_exists(irods_session, im_sample_file.file_) and \
                                     irods_data_object_checksums_match(irods_session, mu_sample_file.file_, im_sample_file.file_):
-                                print('  load sample file "{}" matches muscope sample file "{}"'.format(
+                                print('  imicrobe sample file "{}" matches muscope sample file "{}"'.format(
                                     im_sample_file.file_, mu_sample_file.file_))
                             else:
                                 print('copying')
