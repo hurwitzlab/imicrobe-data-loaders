@@ -33,3 +33,8 @@ for missing_sample_file in find_missing_sample_files():
     else:
         print('    project: {}'.format(path_match.group('project_id')))
         print('    sample: {}'.format(path_match.group('sample_id')))
+        sample_id = int(path_match.group('sample_id'))
+        with session_manager_from_db_uri(os.environ['IMICROBE_DB_URI']) as imicrobe_db_session:
+            sample = imicrobe_db_session.query(models.Sample).filter(models.Sample.sample_id == sample_id)
+            print('    sample has {} sample files'.format(len(sample.sample_file_list)))
+
