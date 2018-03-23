@@ -30,11 +30,18 @@ for missing_sample_file in find_missing_sample_files():
     path_match = path_pattern.search(missing_sample_file)
     if path_match is None:
         raise Exception()
-    else:
+    elif missing_sample_file.endswith('.json'):
         print('    project: {}'.format(path_match.group('project_id')))
         print('    sample: {}'.format(path_match.group('sample_id')))
         sample_id = int(path_match.group('sample_id'))
         with session_manager_from_db_uri(os.environ['IMICROBE_DB_URI']) as imicrobe_db_session:
             sample = imicrobe_db_session.query(models.Sample).filter(models.Sample.sample_id == sample_id).one()
             print('    sample has {} sample files'.format(len(sample.sample_file_list)))
-
+            sample_file = models.Sample_file()
+            sample_file.file_ = missing_sample_file
+            sample_file.sample_file_type = imicrobe_db_session.query(
+                models.Sample_file_type).filter(
+                    models.Sample_file_type.type_ == 'Meta').one()
+            sample.sample_file_list.append(sample_file)
+    else:
+        print('  not a JSON file: {}'.format(missing_sample_file))
