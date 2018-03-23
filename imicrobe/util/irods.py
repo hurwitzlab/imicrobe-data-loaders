@@ -113,7 +113,7 @@ def walk(walk_root):
 
 
 def get_project_sample_collection_paths(
-        collection_root='/iplant/home/shared/load/projects',
+        collection_root='/iplant/home/shared/imicrobe/projects',
         sample_limit=None):
     """Return a dictionary of project paths to lists of sample paths.
 
