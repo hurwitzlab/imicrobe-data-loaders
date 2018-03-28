@@ -38,7 +38,7 @@ def find_missing_sample_files(sample_limit=100):
                             pass
                         else:
                             # this path is in the database more than once
-                            print('WARNING: "{}" was found {} times'.format(data_object.path. len(s)))
+                            print('WARNING: "{}" was found {} times'.format(data_object.path, len(s)))
 # why?
 # collection "/iplant/home/shared/imicrobe/projects/95/samples" does not exist
 
