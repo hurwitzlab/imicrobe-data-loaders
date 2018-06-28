@@ -17,7 +17,7 @@ def get_kegg_annotations(kegg_ids):
     all_bad_kegg_ids = set()
     # the missing_accessions_groups_of_10 generator returns groups of 10 KEGG ids
     # that are not already in the database and that are not 'bad' KEGG ids
-    # the last group may be padded with 'None' if there are fewer than 10 KEGG ids
+    # the last group will be padded with 'None' if there are fewer than 10 KEGG ids
     for group_of_10 in grouper(sorted(kegg_ids), n=10):
         t0 = time.time()
         kegg_id_list = [k for k in group_of_10 if k is not None]

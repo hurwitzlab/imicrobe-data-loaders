@@ -87,7 +87,8 @@ with session_manager_from_db_uri(db_uri=os.environ.get('MUSCOPE_DB_URI')) as mu_
 
             # copy attributes from muscope sample to imicrobe sample
             # if they do not already exist
-            # if attributes do not match update the imicrobe attribute to match the muscope attribute
+            # if attributes do not match update the imicrobe attribute to match
+            # the muscope attribute
             for mu_sample_attr in mu_sample.sample_attr_list:
                 im_sample_attr_type = im_session.query(im.Sample_attr_type).filter(
                     im.Sample_attr_type.type_ == mu_sample_attr.sample_attr_type.type_).one_or_none()
@@ -229,4 +230,3 @@ with session_manager_from_db_uri(db_uri=os.environ.get('MUSCOPE_DB_URI')) as mu_
 
                 else:
                     print('  - ignoring file "{}"'.format(mu_sample_file.file_))
-
